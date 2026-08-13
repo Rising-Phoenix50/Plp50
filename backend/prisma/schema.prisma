@@ -1,0 +1,132 @@
+// This schema models a read-through cache in front of Northstar's real order
+// system, plus the state this app genuinely owns: returns workflow, audit
+// trail, and shipment tracking snapshots. `Order`/`OrderItem` are a cache,
+// not the source of truth — see `cachedAt` and orders.service.js.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled — used at runtime
+  directUrl = env("DIRECT_URL")   // direct — used only by `prisma migrate`
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  externalOrderId String   @unique // Northstar's real order ID, e.g. "NS-10492"
+  customerEmail   String // used to authorize customer self-service lookups
+  status          OrderStatus
+  carrier         String?
+  trackingNumber  String?
+  placedAt        DateTime
+  eta             DateTime?
+  cachedAt        DateTime @updatedAt // cache freshness, not truth
+
+  items          OrderItem[]
+  returns        Return[]
+  trackingEvents TrackingEvent[]
+  auditLogs      LookupAuditLog[]
+
+  @@index([externalOrderId])
+  @@index([customerEmail])
+}
+
+model OrderItem {
+  id      String     @id @default(cuid())
+  orderId String
+  order   Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku     String
+  name    String
+  status  ItemStatus
+
+  @@index([orderId])
+}
+
+model TrackingEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  title     String // e.g. "Arrived at sort facility"
+  location  String // e.g. "Regional Hub — Indianapolis, IN"
+  latitude  Float
+  longitude Float
+  occurredAt DateTime
+  state     TrackingEventState @default(DONE)
+  sequence  Int // display order along the route
+
+  @@index([orderId, sequence])
+}
+
+model Return {
+  id                String       @id @default(cuid())
+  orderId           String
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status            ReturnStatus @default(REQUESTED)
+  reason            String?
+  refundAmountCents Int?
+  initiatedAt       DateTime     @default(now())
+  estimatedRefundAt DateTime?
+
+  @@index([orderId])
+}
+
+// Every order lookup gets logged here — this is the compliance answer to
+// "who looked at this customer's data, and when." actorType distinguishes
+// a customer self-service lookup (repEmail is null) from a rep-assisted
+// lookup (repEmail is set), so audits can filter to "human rep access only."
+model LookupAuditLog {
+  id        String    @id @default(cuid())
+  orderId   String? // nullable: a lookup for an order that doesn't exist should still log the attempt
+  actorType ActorType
+  repEmail  String? // set only when actorType = REP
+  action    AuditAction
+  timestamp DateTime  @default(now())
+  ipAddress String?
+  requestId String? // correlates back to the structured request logs
+
+  @@index([orderId])
+  @@index([repEmail])
+  @@index([timestamp])
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  PARTIALLY_SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ItemStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+}
+
+enum TrackingEventState {
+  DONE
+  CURRENT
+  PENDING
+}
+
+enum ReturnStatus {
+  REQUESTED
+  REFUND_PENDING
+  REFUNDED
+  DENIED
+}
+
+enum ActorType {
+  CUSTOMER
+  REP
+}
+
+enum AuditAction {
+  ORDER_LOOKUP
+  ORDER_LOOKUP_DENIED // email mismatch or not found — still worth logging
+  TRACKING_VIEWED
+  RETURN_INITIATED
+}
