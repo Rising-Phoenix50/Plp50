@@ -9,37 +9,53 @@ function isFresh(cachedAt) {
 }
 
 /**
- * Read-through cache: serve from Postgres if fresh, otherwise hit the
- * upstream carrier/order system and refresh the cache. The caller
- * (controller) doesn't know or care which path was taken.
+ * Read-through cache:
+ * serve from Postgres if fresh, otherwise hit the upstream carrier/order
+ * system and refresh the cache.
  */
 async function getCachedOrRefresh(externalOrderId) {
   const cached = await repo.findByExternalId(externalOrderId);
-  if (cached && isFresh(cached.cachedAt)) return cached;
 
-  const upstream = await carrierClient.fetchOrder(externalOrderId); // throws AppError.notFound if missing
+  if (cached && isFresh(cached.cachedAt)) {
+    return cached;
+  }
+
+  const upstream = await carrierClient.fetchOrder(externalOrderId);
+
   return repo.upsertFromUpstream(externalOrderId, upstream);
 }
 
 /**
- * Authorization + audit logging live here, not in the controller, so every
- * caller of this service gets the same rules regardless of route.
+ * Authorization + audit logging live here so every caller gets the same rules.
  *
- * - CUSTOMER actor: must supply the matching email, or gets a 403 (order
- *   exists but isn't theirs) — never a leaky "not found" that would let
- *   someone distinguish "wrong ID" from "wrong email" by response shape... actually
- *   we deliberately DO distinguish those (see controller), because order IDs
- *   aren't sensitive on their own; email ownership is what's being protected.
- * - REP actor: no email check — reps can look up any order, but every
- *   lookup is logged with their repEmail for the audit trail.
+ * Customer:
+ * - Email is required before any database/upstream lookup.
+ * - Email must match the order's customer email.
+ *
+ * REP:
+ * - No customer email check.
+ * - Every successful lookup is logged with the rep's email.
  */
-async function getOrderForActor({ externalOrderId, actor, email, requestId, ipAddress }) {
+async function getOrderForActor({
+  externalOrderId,
+  actor,
+  email,
+  requestId,
+  ipAddress,
+}) {
+  // Reject malformed customer requests BEFORE doing any database
+  // or upstream work. This prevents an unnecessary cache refresh or
+  // carrier call for a request that can never succeed.
+  if (actor.type === 'CUSTOMER' && !email) {
+    throw AppError.badRequest(
+      'Email is required to look up an order',
+      'EMAIL_REQUIRED'
+    );
+  }
+
   const order = await getCachedOrRefresh(externalOrderId);
 
   if (actor.type === 'CUSTOMER') {
-    if (!email) {
-      throw AppError.badRequest('Email is required to look up an order', 'EMAIL_REQUIRED');
-    }
     if (order.customerEmail.toLowerCase() !== email.toLowerCase()) {
       await repo.logLookup({
         orderId: order.id,
@@ -49,6 +65,7 @@ async function getOrderForActor({ externalOrderId, actor, email, requestId, ipAd
         requestId,
         ipAddress,
       });
+
       throw AppError.forbidden(
         `Order ${externalOrderId} found, but the email doesn't match our records for this order.`,
         'EMAIL_MISMATCH'

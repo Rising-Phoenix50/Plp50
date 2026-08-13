@@ -6,47 +6,104 @@ async function findByExternalId(externalOrderId) {
     include: {
       items: true,
       returns: true,
-      trackingEvents: { orderBy: { sequence: 'asc' } },
+      trackingEvents: {
+        orderBy: { sequence: 'asc' },
+      },
+    },
+  });
+}
+
+async function findById(id) {
+  return db.order.findUnique({
+    where: { id },
+    include: {
+      items: true,
+      returns: true,
+      trackingEvents: {
+        orderBy: { sequence: 'asc' },
+      },
     },
   });
 }
 
 /**
  * Upserts the cached order shell + replaces items/trackingEvents wholesale.
- * Wrapped in a transaction so a partial upstream response never leaves the
- * cache in a half-updated state.
+ *
+ * The transaction contains only the writes that need to be atomic.
+ * The final read happens after commit so it does not consume transaction
+ * timeout budget.
  */
 async function upsertFromUpstream(externalOrderId, upstreamData) {
   const { items, trackingEvents, ...orderFields } = upstreamData;
 
-  return db.$transaction(async (tx) => {
-    const order = await tx.order.upsert({
-      where: { externalOrderId },
-      update: { ...orderFields },
-      create: { externalOrderId, ...orderFields },
-    });
+  const order = await db.$transaction(
+    async (tx) => {
+      const order = await tx.order.upsert({
+        where: { externalOrderId },
+        update: { ...orderFields },
+        create: {
+          externalOrderId,
+          ...orderFields,
+        },
+      });
 
-    await tx.orderItem.deleteMany({ where: { orderId: order.id } });
-    await tx.orderItem.createMany({
-      data: items.map((item) => ({ ...item, orderId: order.id })),
-    });
+      await tx.orderItem.deleteMany({
+        where: { orderId: order.id },
+      });
 
-    await tx.trackingEvent.deleteMany({ where: { orderId: order.id } });
-    await tx.trackingEvent.createMany({
-      data: trackingEvents.map((ev) => ({ ...ev, orderId: order.id })),
-    });
+      await tx.orderItem.createMany({
+        data: items.map((item) => ({
+          ...item,
+          orderId: order.id,
+        })),
+      });
 
-    return tx.order.findUnique({
-      where: { id: order.id },
-      include: { items: true, returns: true, trackingEvents: { orderBy: { sequence: 'asc' } } },
-    });
-  });
+      await tx.trackingEvent.deleteMany({
+        where: { orderId: order.id },
+      });
+
+      await tx.trackingEvent.createMany({
+        data: trackingEvents.map((ev) => ({
+          ...ev,
+          orderId: order.id,
+        })),
+      });
+
+      return order;
+    },
+    {
+      timeout: 15_000,
+      maxWait: 10_000,
+    }
+  );
+
+  // Read only after the transaction has committed.
+  return findById(order.id);
 }
 
-async function logLookup({ orderId, actorType, repEmail, action, requestId, ipAddress }) {
+async function logLookup({
+  orderId,
+  actorType,
+  repEmail,
+  action,
+  requestId,
+  ipAddress,
+}) {
   return db.lookupAuditLog.create({
-    data: { orderId, actorType, repEmail, action, requestId, ipAddress },
+    data: {
+      orderId,
+      actorType,
+      repEmail,
+      action,
+      requestId,
+      ipAddress,
+    },
   });
 }
 
-module.exports = { findByExternalId, upsertFromUpstream, logLookup };
+module.exports = {
+  findByExternalId,
+  findById,
+  upsertFromUpstream,
+  logLookup,
+};

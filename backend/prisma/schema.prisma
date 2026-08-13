@@ -10,19 +10,19 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL") // pooled — used at runtime
-  directUrl = env("DIRECT_URL")   // direct — used only by `prisma migrate`
+  directUrl = env("DIRECT_URL") // direct — used only by `prisma migrate`
 }
 
 model Order {
-  id              String   @id @default(cuid())
-  externalOrderId String   @unique // Northstar's real order ID, e.g. "NS-10492"
+  id              String      @id @default(cuid())
+  externalOrderId String      @unique // Northstar's real order ID, e.g. "NS-10492"
   customerEmail   String // used to authorize customer self-service lookups
   status          OrderStatus
   carrier         String?
   trackingNumber  String?
   placedAt        DateTime
   eta             DateTime?
-  cachedAt        DateTime @updatedAt // cache freshness, not truth
+  cachedAt        DateTime    @updatedAt // cache freshness, not truth
 
   items          OrderItem[]
   returns        Return[]
@@ -45,16 +45,16 @@ model OrderItem {
 }
 
 model TrackingEvent {
-  id        String      @id @default(cuid())
-  orderId   String
-  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  title     String // e.g. "Arrived at sort facility"
-  location  String // e.g. "Regional Hub — Indianapolis, IN"
-  latitude  Float
-  longitude Float
+  id         String             @id @default(cuid())
+  orderId    String
+  order      Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  title      String // e.g. "Arrived at sort facility"
+  location   String // e.g. "Regional Hub — Indianapolis, IN"
+  latitude   Float
+  longitude  Float
   occurredAt DateTime
-  state     TrackingEventState @default(DONE)
-  sequence  Int // display order along the route
+  state      TrackingEventState @default(DONE)
+  sequence   Int // display order along the route
 
   @@index([orderId, sequence])
 }
@@ -77,14 +77,16 @@ model Return {
 // a customer self-service lookup (repEmail is null) from a rep-assisted
 // lookup (repEmail is set), so audits can filter to "human rep access only."
 model LookupAuditLog {
-  id        String    @id @default(cuid())
-  orderId   String? // nullable: a lookup for an order that doesn't exist should still log the attempt
+  id      String  @id @default(cuid())
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
   actorType ActorType
-  repEmail  String? // set only when actorType = REP
+  repEmail  String?
   action    AuditAction
-  timestamp DateTime  @default(now())
+  timestamp DateTime    @default(now())
   ipAddress String?
-  requestId String? // correlates back to the structured request logs
+  requestId String?
 
   @@index([orderId])
   @@index([repEmail])
