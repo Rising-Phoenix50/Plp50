@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { z } = require('zod');
 
 // This runs once, at import time. If any required var is missing or malformed,
