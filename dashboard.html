@@ -1,104 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Northstar · Support Dashboard</title>
-    <!-- Font Awesome 6 (free) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <script src="app.js" defer></script>
- 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Northstar · Support Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="dashboard">
-    <!-- top navigation -->
     <div class="topbar">
         <div class="brand">
             <span class="brand-icon"><i class="fas fa-compass" style="font-size: 16px;"></i></span>
             <span class="brand-name">Northstar</span>
         </div>
-        <div class="topbar-center">
-            <i class="fas fa-headset" style="margin-right: 6px; font-size: 13px;"></i> Support Center
-        </div>
-        <div class="topbar-right">
-            <i class="fas fa-box"></i> Track My Order
-        </div>
+        <div class="topbar-center"><i class="fas fa-headset" style="margin-right: 6px; font-size: 13px;"></i> Support Center</div>
+        <div class="topbar-right"><i class="fas fa-box"></i> Self-Service</div>
     </div>
 
-    <!-- Self-Service Resolution Assistant -->
-    <div class="service-title">
-        Self-Service<br><span style="font-weight: 400; font-size: 16px; color: #2b405b;">Resolution Assistant</span>
-    </div>
-    <div style="margin-top: 8px;"></div>
+    <div class="service-title">Self-Service<br><span>Resolution Assistant</span></div>
 
-    <!-- Order Lookup card -->
-    <div class="lookup-card">
-        <div class="lookup-header">
-            <i class="fas fa-search" style="margin-right: 8px; color: #2b4b72;"></i> Order Lookup
-        </div>
+    <!-- Order Lookup -->
+    <form class="lookup-card" id="lookupForm">
+        <div class="lookup-header"><i class="fas fa-search" style="margin-right: 8px; color: #2b4b72;"></i> Order Lookup</div>
         <div class="lookup-row">
             <div class="lookup-field">
                 <label for="orderNumber">Order Number</label>
-                <input type="text" id="orderNumber" value="NS-10492" readonly style="background: #f7faff; cursor: default;">
+                <input type="text" id="orderNumber" value="NS-10492" spellcheck="false">
             </div>
             <div class="lookup-field">
                 <label for="email">Email</label>
-                <input type="email" id="email" value="user@example.com" readonly style="background: #f7faff; cursor: default;">
+                <input type="email" id="email" value="user@example.com">
             </div>
-            <div class="btn-find">
-                <i class="fas fa-arrow-right"></i> Find Order
-            </div>
+            <button type="submit" class="btn-find"><i class="fas fa-arrow-right"></i> Find Order</button>
         </div>
-    </div>
+        <div class="demo-hint">Try: NS-10492 · NS-20871 (has a return) · NS-00000 (not found)</div>
+    </form>
 
-    <!-- Order summary card -->
-    <div class="order-card">
+    <div class="error-banner" id="errorBanner"></div>
+
+    <!-- Order summary -->
+    <div class="order-card" id="orderCard">
         <div class="order-header">
-            <span class="order-number">Order #NS-10492</span>
-            <span class="order-status-badge">
-                <i class="fas fa-truck"></i> IN TRANSIT
-            </span>
+            <span class="order-number" id="orderNum"></span>
+            <span class="order-status-badge" id="statusBadge"></span>
         </div>
         <div class="order-meta">
-            <span><i class="far fa-calendar-alt"></i> Placed on Aug 8, 2026</span>
-            <span class="fedex"><i class="fas fa-shipping-fast"></i> FedEx tracking number: 48000250030662</span>
+            <span><i class="far fa-calendar-alt"></i> <span id="placedOn"></span></span>
+            <span class="fedex" id="carrierMeta"><i class="fas fa-shipping-fast"></i> <span id="carrierText"></span></span>
         </div>
-        <div class="order-meta" style="margin-top: -4px;">
-            <span><i class="far fa-clock"></i> Estimated delivery: <strong>Friday, Aug 14</strong></span>
+        <div class="order-meta" style="margin-top: -4px;" id="etaRow">
+            <span><i class="far fa-clock"></i> Estimated delivery: <strong id="etaText"></strong></span>
         </div>
-
-        <!-- items -->
-        <div class="items-list">
-            <div class="item-row">
-                <span class="item-name"><i class="fas fa-tshirt" style="margin-right: 10px; color: #47648b; width: 16px;"></i> Northstar Classic Hoodie (M / Navy)</span>
-                <span class="item-status delivered"><i class="fas fa-check-circle" style="margin-right: 4px;"></i> Delivered</span>
-            </div>
-            <div class="item-row">
-                <span class="item-name"><i class="fas fa-shoe-prints" style="margin-right: 10px; color: #47648b; width: 16px;"></i> Trail Running Shoes (10 / Black)</span>
-                <span class="item-status in-transit"><i class="fas fa-truck" style="margin-right: 4px;"></i> In Transit</span>
-            </div>
-        </div>
+        <div class="items-list" id="itemsList"></div>
     </div>
 
     <!-- Quick Actions -->
-    <div style="margin-top: 6px;">
-        <div style="font-weight: 500; font-size: 15px; color: #1e334f; margin-bottom: 10px; letter-spacing: -0.1px;">
-            <i class="fas fa-bolt" style="margin-right: 8px; color: #2e5a8a;"></i> Quick Actions
-        </div>
+    <div class="quick-actions-wrap" id="quickActionsWrap">
+        <div class="quick-actions-label"><i class="fas fa-bolt" style="margin-right: 8px; color: #2e5a8a;"></i> Quick Actions</div>
         <div class="quick-actions">
-            <span class="action-btn"><i class="fas fa-map-pin"></i> Track Package</span>
-            <span class="action-btn"><i class="fas fa-undo-alt"></i> Start Return/Refund</span>
-            <span class="action-btn"><i class="fas fa-flag"></i> Report Issue</span>
+            <button class="action-btn" id="btnTrack"><i class="fas fa-map-pin"></i> Track Package</button>
+            <button class="action-btn" id="btnReturn"><i class="fas fa-undo-alt"></i> Start Return/Refund</button>
+            <button class="action-btn" id="btnReport"><i class="fas fa-flag"></i> Report Issue</button>
         </div>
     </div>
 
-    <!-- subtle footer (just for spacing) -->
+    <!-- Track Package panel -->
+    <div class="panel" id="trackPanel">
+        <div class="panel-head"><h3>Shipment route</h3><p>Based on carrier scan events — not live GPS</p></div>
+        <div class="track-body" id="trackBody">
+            <div id="map"></div>
+            <div class="track-note">Most recent scan is highlighted. Route line connects confirmed carrier checkpoints.</div>
+        </div>
+    </div>
+
+    <!-- Return/Refund panel -->
+    <div class="panel" id="returnsPanel">
+        <div class="panel-head"><h3>Return &amp; refund status</h3><p>Self-service — no ticket required</p></div>
+        <div class="returns-body" id="returnsBody"></div>
+    </div>
+
+    <!-- Report Issue panel -->
+    <div class="panel" id="reportPanel">
+        <div class="panel-head"><h3>Report an issue</h3><p>Outside self-service scope</p></div>
+        <div class="report-body">This routes to a live support agent and isn't handled by self-service lookup. In the full build this would open a ticket pre-filled with this order's details.</div>
+    </div>
+
     <div style="margin-top: 30px; border-top: 1px solid #eef3f9; padding-top: 14px; display: flex; justify-content: flex-end; font-size: 12px; color: #889bb2; gap: 12px;">
         <span><i class="far fa-circle" style="font-size: 8px; color: #9eb3cc;"></i> Northstar Support</span>
         <span>•</span>
-        <span>v2.0</span>
+        <span>v3.0 — functional demo</span>
     </div>
 </div>
+
+<script src="script.js"></script>
 </body>
 </html>
