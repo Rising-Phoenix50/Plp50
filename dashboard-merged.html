@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Northstar · Support Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+        background: #f4f6fa;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+        margin: 0;
+    }
+
+    .dashboard {
+        max-width: 700px;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 32px;
+        box-shadow: 0 20px 40px -12px rgba(0, 20, 30, 0.15);
+        padding: 28px 28px 32px;
+    }
+
+    /* ----- top bar ----- */
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #eaedf2;
+        flex-wrap: wrap;
+        gap: 12px 8px;
+    }
+    .brand { display: flex; align-items: center; gap: 6px; }
+    .brand-icon {
+        background: #1b2b4b; color: white; width: 34px; height: 34px;
+        border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 18px; letter-spacing: -0.5px;
+    }
+    .brand-name { font-weight: 700; font-size: 20px; letter-spacing: -0.3px; color: #0b1a2e; }
+    .topbar-center {
+        font-weight: 500; font-size: 16px; color: #1f2a41; background: #f0f3f8;
+        padding: 6px 16px; border-radius: 40px; letter-spacing: 0.2px;
+    }
+    .topbar-right {
+        font-weight: 500; font-size: 15px; color: #1f5b9e; background: #e8f0fe;
+        padding: 6px 16px; border-radius: 40px; display: flex; align-items: center; gap: 6px;
+    }
+    .topbar-right i { font-size: 14px; color: #1f5b9e; }
+
+    /* ----- self-service section ----- */
+    .service-title { margin-top: 26px; font-weight: 600; font-size: 18px; color: #0b1a2e; letter-spacing: -0.2px; }
+    .service-title span { font-weight: 400; font-size: 16px; color: #2b405b; }
+
+    /* lookup card */
+    .lookup-card {
+        background: #f8faff; border-radius: 24px; padding: 20px 24px 24px;
+        border: 1px solid #e6ecf3; margin: 18px 0 24px;
+    }
+    .lookup-header { font-weight: 600; font-size: 16px; color: #1a2b44; margin-bottom: 16px; }
+    .lookup-row { display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: flex-end; }
+    .lookup-field { flex: 1 0 180px; min-width: 140px; }
+    .lookup-field label { display: block; font-size: 13px; font-weight: 500; color: #3b4a62; margin-bottom: 5px; }
+    .lookup-field input {
+        width: 100%; padding: 12px 14px; border: 1px solid #d4dce6; border-radius: 18px;
+        font-size: 14px; background: white; color: #0b1a2e; font-weight: 450;
+    }
+    .lookup-field input:focus { outline: none; border-color: #1f5b9e; box-shadow: 0 0 0 3px rgba(31, 91, 158, 0.12); }
+    .btn-find {
+        background: #1f5b9e; border: none; color: white; font-weight: 600; font-size: 15px;
+        padding: 12px 28px; border-radius: 40px; cursor: pointer; white-space: nowrap;
+        display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 8px rgba(31, 91, 158, 0.15);
+    }
+    .btn-find:hover { background: #184b85; }
+    .demo-hint { font-size: 11.5px; color: #7c8aa0; margin-top: 12px; font-family: ui-monospace, monospace; }
+
+    .error-banner {
+        display: none; background: #FDECEC; border: 1px solid #F3C4C4; color: #A32424;
+        font-size: 13px; padding: 12px 16px; border-radius: 14px; margin-bottom: 20px;
+    }
+
+    /* order summary card */
+    .order-card {
+        background: white; border-radius: 24px; padding: 20px 24px 22px;
+        border: 1px solid #e6ecf3; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 20px;
+        display: none;
+    }
+    .order-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .order-number { font-weight: 700; font-size: 18px; color: #0b1a2e; }
+    .order-status-badge {
+        font-weight: 600; font-size: 14px; padding: 5px 16px; border-radius: 40px;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .order-status-badge.in-transit { background: #e3f0f9; color: #16558a; }
+    .order-status-badge.delivered { background: #e1f3e8; color: #0e6b3e; }
+    .order-status-badge i { font-size: 12px; }
+
+    .order-meta { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 12px 0 8px; font-size: 14px; color: #2d3f57; }
+    .order-meta span { display: flex; align-items: center; gap: 6px; }
+    .order-meta i { color: #5b6f88; font-size: 14px; width: 18px; }
+    .order-meta .fedex { background: #f0f4fc; padding: 2px 12px 2px 10px; border-radius: 40px; color: #1b3b61; }
+    .order-meta .fedex i { color: #1f5b9e; }
+
+    .items-list { margin: 20px 0 8px; border-top: 1px solid #edf1f7; padding-top: 18px; }
+    .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f4fa; }
+    .item-row:last-child { border-bottom: none; padding-bottom: 2px; }
+    .item-name { font-weight: 500; color: #14273e; font-size: 15px; }
+    .item-status { font-size: 14px; font-weight: 500; padding: 4px 12px; border-radius: 40px; background: #f0f4fa; color: #2c405a; }
+    .item-status.delivered { background: #e1f3e8; color: #0e6b3e; }
+    .item-status.in-transit { background: #e3f0f9; color: #16558a; }
+
+    /* quick actions */
+    .quick-actions-wrap { margin-top: 6px; display: none; }
+    .quick-actions-label { font-weight: 500; font-size: 15px; color: #1e334f; margin-bottom: 10px; }
+    .quick-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; padding-top: 6px; }
+    .action-btn {
+        background: white; border: 1px solid #d8e0ea; padding: 10px 22px; border-radius: 60px;
+        font-weight: 500; font-size: 14px; color: #1a2c47; display: inline-flex; align-items: center;
+        gap: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+    }
+    .action-btn i { color: #385b85; font-size: 15px; }
+    .action-btn:hover { background: #f9fcff; border-color: #b6c9df; }
+    .action-btn.active { background: #1f5b9e; color: white; border-color: #1f5b9e; }
+    .action-btn.active i { color: white; }
+
+    /* expandable panels */
+    .panel {
+        display: none; margin-top: 16px; border: 1px solid #e6ecf3; border-radius: 20px;
+        overflow: hidden; background: #fff;
+    }
+    .panel-head { padding: 16px 20px; border-bottom: 1px solid #edf1f7; }
+    .panel-head h3 { font-size: 15px; font-weight: 650; color: #0b1a2e; margin: 0 0 2px; }
+    .panel-head p { font-size: 12.5px; color: #7c8aa0; margin: 0; }
+
+    /* returns panel */
+    .returns-body { padding: 18px 20px; }
+    .returns-status-line { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .returns-status-line .rs-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .returns-status-line.pending .rs-dot { background: #C7791E; }
+    .returns-status-line.none .rs-dot { background: #B6BEC6; }
+    .returns-detail { font-size: 13.5px; color: #2d3f57; line-height: 1.7; }
+    .returns-detail b { color: #0b1a2e; }
+    .no-return-box { text-align: center; padding: 10px 0 4px; }
+    .no-return-box p { font-size: 13.5px; color: #4e5b6e; margin-bottom: 14px; }
+    .btn-secondary {
+        background: #1f5b9e; color: white; border: none; padding: 10px 22px; border-radius: 40px;
+        font-weight: 600; font-size: 13.5px; cursor: pointer;
+    }
+    .confirm-note { font-size: 12.5px; color: #0e6b3e; background: #e1f3e8; padding: 8px 12px; border-radius: 10px; margin-top: 10px; display: none; }
+
+    /* tracking panel */
+    .track-body { }
+    #map { height: 300px; width: 100%; }
+    .track-note { padding: 10px 20px; font-size: 11.5px; color: #7c8aa0; border-top: 1px solid #edf1f7; }
+    .no-tracking-box { padding: 18px 20px; font-size: 13.5px; color: #4e5b6e; }
+    .pin-icon { width: 20px; height: 20px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+    .pin-icon.done { background: #0e6b3e; }
+    .pin-icon.current { background: #C7791E; }
+    .pin-icon.pending { background: #B6BEC6; }
+
+    /* report issue panel */
+    .report-body { padding: 18px 20px; font-size: 13.5px; color: #4e5b6e; }
+
+    @media (max-width: 550px) {
+        .dashboard { padding: 20px; }
+        .lookup-row { flex-direction: column; align-items: stretch; }
+        .btn-find { align-self: flex-start; }
+        .order-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+        .quick-actions { flex-direction: column; align-items: stretch; }
+        .action-btn { justify-content: center; }
+        .item-row { flex-wrap: wrap; gap: 6px; }
+    }
+</style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="topbar">
+        <div class="brand">
+            <span class="brand-icon"><i class="fas fa-compass" style="font-size: 16px;"></i></span>
+            <span class="brand-name">Northstar</span>
+        </div>
+        <div class="topbar-center"><i class="fas fa-headset" style="margin-right: 6px; font-size: 13px;"></i> Support Center</div>
+        <div class="topbar-right"><i class="fas fa-box"></i> Self-Service</div>
+    </div>
+
+    <div class="service-title">Self-Service<br><span>Resolution Assistant</span></div>
+
+    <!-- Order Lookup -->
+    <form class="lookup-card" id="lookupForm">
+        <div class="lookup-header"><i class="fas fa-search" style="margin-right: 8px; color: #2b4b72;"></i> Order Lookup</div>
+        <div class="lookup-row">
+            <div class="lookup-field">
+                <label for="orderNumber">Order Number</label>
+                <input type="text" id="orderNumber" value="NS-10492" spellcheck="false">
+            </div>
+            <div class="lookup-field">
+                <label for="email">Email</label>
+                <input type="email" id="email" value="user@example.com">
+            </div>
+            <button type="submit" class="btn-find"><i class="fas fa-arrow-right"></i> Find Order</button>
+        </div>
+        <div class="demo-hint">Try: NS-10492 · NS-20871 (has a return) · NS-00000 (not found)</div>
+    </form>
+
+    <div class="error-banner" id="errorBanner"></div>
+
+    <!-- Order summary -->
+    <div class="order-card" id="orderCard">
+        <div class="order-header">
+            <span class="order-number" id="orderNum"></span>
+            <span class="order-status-badge" id="statusBadge"></span>
+        </div>
+        <div class="order-meta">
+            <span><i class="far fa-calendar-alt"></i> <span id="placedOn"></span></span>
+            <span class="fedex" id="carrierMeta"><i class="fas fa-shipping-fast"></i> <span id="carrierText"></span></span>
+        </div>
+        <div class="order-meta" style="margin-top: -4px;" id="etaRow">
+            <span><i class="far fa-clock"></i> Estimated delivery: <strong id="etaText"></strong></span>
+        </div>
+        <div class="items-list" id="itemsList"></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-wrap" id="quickActionsWrap">
+        <div class="quick-actions-label"><i class="fas fa-bolt" style="margin-right: 8px; color: #2e5a8a;"></i> Quick Actions</div>
+        <div class="quick-actions">
+            <button class="action-btn" id="btnTrack"><i class="fas fa-map-pin"></i> Track Package</button>
+            <button class="action-btn" id="btnReturn"><i class="fas fa-undo-alt"></i> Start Return/Refund</button>
+            <button class="action-btn" id="btnReport"><i class="fas fa-flag"></i> Report Issue</button>
+        </div>
+    </div>
+
+    <!-- Track Package panel -->
+    <div class="panel" id="trackPanel">
+        <div class="panel-head"><h3>Shipment route</h3><p>Based on carrier scan events — not live GPS</p></div>
+        <div class="track-body" id="trackBody">
+            <div id="map"></div>
+            <div class="track-note">Most recent scan is highlighted. Route line connects confirmed carrier checkpoints.</div>
+        </div>
+    </div>
+
+    <!-- Return/Refund panel -->
+    <div class="panel" id="returnsPanel">
+        <div class="panel-head"><h3>Return &amp; refund status</h3><p>Self-service — no ticket required</p></div>
+        <div class="returns-body" id="returnsBody"></div>
+    </div>
+
+    <!-- Report Issue panel -->
+    <div class="panel" id="reportPanel">
+        <div class="panel-head"><h3>Report an issue</h3><p>Outside self-service scope</p></div>
+        <div class="report-body">This routes to a live support agent and isn't handled by self-service lookup. In the full build this would open a ticket pre-filled with this order's details.</div>
+    </div>
+
+    <div style="margin-top: 30px; border-top: 1px solid #eef3f9; padding-top: 14px; display: flex; justify-content: flex-end; font-size: 12px; color: #889bb2; gap: 12px;">
+        <span><i class="far fa-circle" style="font-size: 8px; color: #9eb3cc;"></i> Northstar Support</span>
+        <span>•</span>
+        <span>v3.0 — functional demo</span>
+    </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   Mock "API" data — shaped like real order/returns/tracking
+   endpoints would return. Swap for real fetch() calls later.
+--------------------------------------------------------- */
+const ORDERS = {
+  "NS-10492": {
+    email: "user@example.com",
+    placedOn: "Aug 8, 2026",
+    carrier: "FedEx",
+    trackingNumber: "48000250030662",
+    eta: "Friday, Aug 14",
+    status: "in_transit",
+    items: [
+      { name: "Northstar Classic Hoodie (M / Navy)", icon: "fa-tshirt", status: "delivered" },
+      { name: "Trail Running Shoes (10 / Black)", icon: "fa-shoe-prints", status: "in-transit" },
+    ],
+    returns: null,
+    trackingEvents: [
+      { title: "Label created", loc: "Northstar Fulfillment — Louisville, KY", lat: 38.2527, lng: -85.7585, time: "Aug 10, 9:02 AM", state: "done" },
+      { title: "Picked up by carrier", loc: "Louisville, KY", lat: 38.2000, lng: -85.6500, time: "Aug 10, 4:41 PM", state: "done" },
+      { title: "Arrived at sort facility", loc: "Regional Hub — Indianapolis, IN", lat: 39.7684, lng: -86.1581, time: "Aug 11, 2:15 AM", state: "done" },
+      { title: "Arrived at local facility", loc: "Local Hub — Columbus, OH", lat: 39.9612, lng: -82.9988, time: "Aug 12, 5:47 AM", state: "current" },
+      { title: "Delivered", loc: "Destination address", lat: 40.0150, lng: -83.0300, time: "Pending", state: "pending" },
+    ]
+  },
+  "NS-20871": {
+    email: "jordan@example.com",
+    placedOn: "Aug 2, 2026",
+    carrier: "UPS",
+    trackingNumber: "1Z999AA10123456784",
+    eta: "Delivered Aug 6",
+    status: "delivered",
+    items: [
+      { name: "Insulated Water Bottle (32oz / Slate)", icon: "fa-flask", status: "delivered" },
+    ],
+    returns: {
+      returnStatus: "refund_pending",
+      returnInitiatedAt: "Aug 9, 2026",
+      refundAmount: "$24.00",
+      estimatedRefundDate: "Aug 16, 2026",
+      reason: "Wrong size"
+    },
+    trackingEvents: [
+      { title: "Label created", loc: "Northstar Fulfillment — Reno, NV", lat: 39.5296, lng: -119.8138, time: "Aug 3, 8:00 AM", state: "done" },
+      { title: "Out for delivery", loc: "San Francisco, CA", lat: 37.7749, lng: -122.4194, time: "Aug 6, 8:12 AM", state: "done" },
+      { title: "Delivered", loc: "Destination address", lat: 37.7849, lng: -122.4294, time: "Aug 6, 1:14 PM", state: "done" },
+    ]
+  }
+};
+
+const el = {
+  form: document.getElementById('lookupForm'),
+  orderNumber: document.getElementById('orderNumber'),
+  email: document.getElementById('email'),
+  errorBanner: document.getElementById('errorBanner'),
+  orderCard: document.getElementById('orderCard'),
+  orderNum: document.getElementById('orderNum'),
+  statusBadge: document.getElementById('statusBadge'),
+  placedOn: document.getElementById('placedOn'),
+  carrierText: document.getElementById('carrierText'),
+  etaRow: document.getElementById('etaRow'),
+  etaText: document.getElementById('etaText'),
+  itemsList: document.getElementById('itemsList'),
+  quickActionsWrap: document.getElementById('quickActionsWrap'),
+  btnTrack: document.getElementById('btnTrack'),
+  btnReturn: document.getElementById('btnReturn'),
+  btnReport: document.getElementById('btnReport'),
+  trackPanel: document.getElementById('trackPanel'),
+  returnsPanel: document.getElementById('returnsPanel'),
+  reportPanel: document.getElementById('reportPanel'),
+  returnsBody: document.getElementById('returnsBody'),
+};
+
+let currentOrder = null;
+let map, markers = [], routeLine;
+
+function pinIcon(state){
+  return L.divIcon({
+    className: '',
+    html: `<div class="pin-icon ${state}"></div>`,
+    iconSize: [20,20],
+    iconAnchor: [10,18],
+  });
+}
+
+function ensureMap(){
+  if (map) return;
+  map = L.map('map', { scrollWheelZoom: false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
+  }).addTo(map);
+}
+
+function renderTracking(order){
+  ensureMap();
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  if (routeLine) map.removeLayer(routeLine);
+
+  const events = order.trackingEvents;
+  const latlngs = events.map(e => [e.lat, e.lng]);
+  routeLine = L.polyline(latlngs, { color: '#1f5b9e', weight: 2.5, opacity: .5, dashArray: '1 8' }).addTo(map);
+  events.forEach(ev => {
+    const marker = L.marker([ev.lat, ev.lng], { icon: pinIcon(ev.state) }).addTo(map);
+    marker.bindPopup(`<b>${ev.title}</b><br>${ev.loc}<br><span style="font-size:11px;color:#7c8aa0">${ev.time}</span>`);
+    markers.push(marker);
+  });
+  setTimeout(() => {
+    map.invalidateSize();
+    map.fitBounds(routeLine.getBounds(), { padding: [30, 30] });
+  }, 50);
+}
+
+function renderReturns(order){
+  if (order.returns){
+    const r = order.returns;
+    el.returnsBody.innerHTML = `
+      <div class="returns-status-line pending"><span class="rs-dot"></span>
+        <strong>Refund pending</strong>
+      </div>
+      <div class="returns-detail">
+        Return initiated <b>${r.returnInitiatedAt}</b> · Reason: <b>${r.reason}</b><br>
+        Refund amount: <b>${r.refundAmount}</b><br>
+        Estimated refund date: <b>${r.estimatedRefundDate}</b>
+      </div>`;
+  } else {
+    el.returnsBody.innerHTML = `
+      <div class="no-return-box">
+        <p>No return has been initiated for this order.</p>
+        <button class="btn-secondary" id="btnRequestReturn">Request a return</button>
+        <div class="confirm-note" id="returnConfirm">Return requested — a label has been generated and refund tracking will begin.</div>
+      </div>`;
+    document.getElementById('btnRequestReturn').addEventListener('click', () => {
+      document.getElementById('returnConfirm').style.display = 'block';
+      document.getElementById('btnRequestReturn').disabled = true;
+      document.getElementById('btnRequestReturn').style.opacity = '.5';
+    });
+  }
+}
+
+function closeAllPanels(){
+  [el.trackPanel, el.returnsPanel, el.reportPanel].forEach(p => p.style.display = 'none');
+  [el.btnTrack, el.btnReturn, el.btnReport].forEach(b => b.classList.remove('active'));
+}
+
+function toggle(panel, btn, onOpen){
+  const isOpen = panel.style.display === 'block';
+  closeAllPanels();
+  if (!isOpen){
+    panel.style.display = 'block';
+    btn.classList.add('active');
+    if (onOpen) onOpen();
+  }
+}
+
+function renderOrder(id, order){
+  currentOrder = order;
+  el.errorBanner.style.display = 'none';
+  el.orderCard.style.display = 'block';
+  el.quickActionsWrap.style.display = 'block';
+  closeAllPanels();
+
+  el.orderNum.textContent = `Order #${id}`;
+  el.placedOn.textContent = `Placed on ${order.placedOn}`;
+  el.carrierText.textContent = `${order.carrier} tracking number: ${order.trackingNumber}`;
+
+  if (order.status === 'delivered'){
+    el.statusBadge.className = 'order-status-badge delivered';
+    el.statusBadge.innerHTML = `<i class="fas fa-check-circle"></i> ${order.eta.toUpperCase()}`;
+    el.etaRow.style.display = 'none';
+  } else {
+    el.statusBadge.className = 'order-status-badge in-transit';
+    el.statusBadge.innerHTML = `<i class="fas fa-truck"></i> IN TRANSIT`;
+    el.etaRow.style.display = 'flex';
+    el.etaText.textContent = order.eta;
+  }
+
+  el.itemsList.innerHTML = order.items.map(item => `
+    <div class="item-row">
+      <span class="item-name"><i class="fas ${item.icon}" style="margin-right: 10px; color: #47648b; width: 16px;"></i> ${item.name}</span>
+      <span class="item-status ${item.status}">
+        <i class="fas ${item.status === 'delivered' ? 'fa-check-circle' : 'fa-truck'}" style="margin-right: 4px;"></i>
+        ${item.status === 'delivered' ? 'Delivered' : 'In Transit'}
+      </span>
+    </div>`).join('');
+
+  renderReturns(order);
+}
+
+el.form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const id = el.orderNumber.value.trim().toUpperCase();
+  const emailVal = el.email.value.trim().toLowerCase();
+  const order = ORDERS[id];
+
+  if (!order){
+    el.orderCard.style.display = 'none';
+    el.quickActionsWrap.style.display = 'none';
+    closeAllPanels();
+    el.errorBanner.style.display = 'block';
+    el.errorBanner.textContent = `No order found matching "${id}". Check the order number and try again.`;
+    return;
+  }
+  if (order.email.toLowerCase() !== emailVal){
+    el.orderCard.style.display = 'none';
+    el.quickActionsWrap.style.display = 'none';
+    closeAllPanels();
+    el.errorBanner.style.display = 'block';
+    el.errorBanner.textContent = `Order ${id} found, but the email doesn't match our records for this order.`;
+    return;
+  }
+  renderOrder(id, order);
+});
+
+el.btnTrack.addEventListener('click', () => {
+  if (!currentOrder) return;
+  toggle(el.trackPanel, el.btnTrack, () => renderTracking(currentOrder));
+});
+el.btnReturn.addEventListener('click', () => {
+  if (!currentOrder) return;
+  toggle(el.returnsPanel, el.btnReturn);
+});
+el.btnReport.addEventListener('click', () => {
+  if (!currentOrder) return;
+  toggle(el.reportPanel, el.btnReport);
+});
+
+// Load the default demo order on first render
+renderOrder('NS-10492', ORDERS['NS-10492']);
+</script>
+</body>
+</html>
