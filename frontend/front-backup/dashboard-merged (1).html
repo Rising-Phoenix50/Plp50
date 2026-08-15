@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Northstar · Support Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
+<style>
+    :root{
+        /* ---- warm retail palette ---- */
+        --crimson-wine: #6D1B29;
+        --cherry-cola: #45201C;
+        --imperial-red: #C4293C;
+        --burnt-orange: #C05A1F;
+        --warm-lime: #97AE3B;
+        --olive-ink: #35331E;
+        --cream-vanilla: #FBF4E7;
+        --glassy-sand: #EFE4CE;
+        --sand-line: #E2D5B8;
+
+        --lime-soft: #EAF0D3;
+        --orange-soft: #FBE7D4;
+        --wine-soft: #F3E1E1;
+        --red-soft: #FBE4E4;
+        --ink-soft: #746F55;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+        background: var(--cream-vanilla);
+        background-image:
+            radial-gradient(circle at 8% 8%, rgba(151,174,59,0.08), transparent 40%),
+            radial-gradient(circle at 92% 88%, rgba(109,27,41,0.08), transparent 40%);
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+        margin: 0;
+    }
+
+    .dashboard {
+        max-width: 720px;
+        width: 100%;
+        background: #FFFDF8;
+        border-radius: 28px;
+        box-shadow: 0 24px 48px -16px rgba(69, 32, 28, 0.22);
+        padding: 0 0 32px;
+        border: 1px solid var(--sand-line);
+        overflow: hidden;
+    }
+
+    /* ----- top bar ----- */
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 22px 28px;
+        flex-wrap: wrap;
+        gap: 12px 8px;
+        background: linear-gradient(120deg, var(--crimson-wine), var(--cherry-cola));
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+        background: rgba(255,255,255,0.16); color: #FBF4E7; width: 36px; height: 36px;
+        border-radius: 11px; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 18px; letter-spacing: -0.5px;
+        border: 1px solid rgba(255,255,255,0.25);
+    }
+    .brand-name { font-family: 'Fraunces', serif; font-weight: 650; font-size: 21px; letter-spacing: -0.2px; color: #FBF4E7; }
+    .topbar-center {
+        font-weight: 500; font-size: 15px; color: #FBF4E7; background: rgba(255,255,255,0.14);
+        padding: 6px 16px; border-radius: 40px; letter-spacing: 0.2px;
+        border: 1px solid rgba(255,255,255,0.18);
+    }
+    .topbar-right {
+        font-weight: 600; font-size: 14px; color: var(--cherry-cola); background: var(--warm-lime);
+        padding: 6px 16px; border-radius: 40px; display: flex; align-items: center; gap: 6px;
+    }
+    .topbar-right i { font-size: 13px; color: var(--cherry-cola); }
+
+    .content { padding: 0 28px; }
+
+    /* ----- self-service section ----- */
+    .service-title { margin-top: 26px; font-family: 'Fraunces', serif; font-weight: 650; font-size: 21px; color: var(--olive-ink); letter-spacing: -0.2px; }
+    .service-title span { font-family: 'Inter', sans-serif; font-weight: 400; font-size: 15px; color: var(--ink-soft); }
+
+    /* lookup card — "glassy sand" treatment */
+    .lookup-card {
+        background: rgba(239, 228, 206, 0.55);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-radius: 22px; padding: 20px 24px 24px;
+        border: 1px solid rgba(226, 213, 184, 0.9);
+        margin: 18px 0 24px;
+    }
+    .lookup-header { font-weight: 650; font-size: 15.5px; color: var(--cherry-cola); margin-bottom: 16px; }
+    .lookup-row { display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: flex-end; }
+    .lookup-field { flex: 1 0 180px; min-width: 140px; }
+    .lookup-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .lookup-field input {
+        width: 100%; padding: 12px 14px; border: 1px solid var(--sand-line); border-radius: 16px;
+        font-size: 14px; background: #FFFDF8; color: var(--olive-ink); font-weight: 450;
+    }
+    .lookup-field input:focus { outline: none; border-color: var(--crimson-wine); box-shadow: 0 0 0 3px rgba(109, 27, 41, 0.12); }
+    .btn-find {
+        background: var(--crimson-wine); border: none; color: #FBF4E7; font-weight: 650; font-size: 14.5px;
+        padding: 12px 26px; border-radius: 40px; cursor: pointer; white-space: nowrap;
+        display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 6px 14px rgba(109, 27, 41, 0.25);
+    }
+    .btn-find:hover { background: var(--cherry-cola); }
+    .demo-hint { font-size: 11.5px; color: var(--ink-soft); margin-top: 12px; font-family: ui-monospace, monospace; }
+
+    .error-banner {
+        display: none; background: var(--red-soft); border: 1px solid #EBC0C4; color: var(--imperial-red);
+        font-size: 13px; padding: 12px 16px; border-radius: 14px; margin-bottom: 20px; font-weight: 500;
+    }
+
+    /* order summary card */
+    .order-card {
+        background: #FFFDF8; border-radius: 22px; padding: 20px 24px 22px;
+        border: 1px solid var(--sand-line); box-shadow: 0 4px 14px rgba(69,32,28,0.05); margin-bottom: 20px;
+        display: none;
+    }
+    .order-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .order-number { font-weight: 700; font-size: 18px; color: var(--olive-ink); }
+    .order-status-badge {
+        font-weight: 650; font-size: 13.5px; padding: 5px 16px; border-radius: 40px;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .order-status-badge.in-transit { background: var(--orange-soft); color: var(--burnt-orange); }
+    .order-status-badge.delivered { background: var(--lime-soft); color: #5E7024; }
+    .order-status-badge i { font-size: 12px; }
+
+    .order-meta { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 12px 0 8px; font-size: 13.5px; color: var(--olive-ink); }
+    .order-meta span { display: flex; align-items: center; gap: 6px; }
+    .order-meta i { color: var(--ink-soft); font-size: 14px; width: 18px; }
+    .order-meta .fedex { background: var(--glassy-sand); padding: 2px 12px 2px 10px; border-radius: 40px; color: var(--cherry-cola); }
+    .order-meta .fedex i { color: var(--crimson-wine); }
+
+    .items-list { margin: 20px 0 8px; border-top: 1px solid var(--sand-line); padding-top: 18px; }
+    .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F3ECDC; }
+    .item-row:last-child { border-bottom: none; padding-bottom: 2px; }
+    .item-name { font-weight: 500; color: var(--olive-ink); font-size: 14.5px; }
+    .item-status { font-size: 13.5px; font-weight: 600; padding: 4px 12px; border-radius: 40px; background: var(--glassy-sand); color: var(--olive-ink); }
+    .item-status.delivered { background: var(--lime-soft); color: #5E7024; }
+    .item-status.in-transit { background: var(--orange-soft); color: var(--burnt-orange); }
+
+    /* quick actions */
+    .quick-actions-wrap { margin-top: 6px; display: none; }
+    .quick-actions-label { font-weight: 650; font-size: 14.5px; color: var(--cherry-cola); margin-bottom: 10px; }
+    .quick-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; padding-top: 6px; }
+    .action-btn {
+        background: #FFFDF8; border: 1.5px solid var(--sand-line); padding: 10px 22px; border-radius: 60px;
+        font-weight: 600; font-size: 13.5px; color: var(--cherry-cola); display: inline-flex; align-items: center;
+        gap: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(69,32,28,0.03);
+    }
+    .action-btn i { color: var(--crimson-wine); font-size: 15px; }
+    .action-btn:hover { background: var(--wine-soft); border-color: var(--crimson-wine); }
+    .action-btn.active { background: var(--crimson-wine); color: #FBF4E7; border-color: var(--crimson-wine); }
+    .action-btn.active i { color: #FBF4E7; }
+
+    /* expandable panels */
+    .panel {
+        display: none; margin-top: 16px; border: 1px solid var(--sand-line); border-radius: 20px;
+        overflow: hidden; background: #FFFDF8;
+    }
+    .panel-head { padding: 16px 20px; border-bottom: 1px solid #F3ECDC; background: var(--glassy-sand); }
+    .panel-head h3 { font-family: 'Fraunces', serif; font-size: 15.5px; font-weight: 650; color: var(--cherry-cola); margin: 0 0 2px; }
+    .panel-head p { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+
+    /* returns panel */
+    .returns-body { padding: 18px 20px; }
+    .returns-status-line { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .returns-status-line .rs-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .returns-status-line.pending .rs-dot { background: var(--burnt-orange); }
+    .returns-status-line.none .rs-dot { background: var(--ink-soft); }
+    .returns-status-line strong { color: var(--olive-ink); }
+    .returns-detail { font-size: 13.5px; color: var(--olive-ink); line-height: 1.7; }
+    .returns-detail b { color: var(--cherry-cola); }
+    .no-return-box { text-align: center; padding: 10px 0 4px; }
+    .no-return-box p { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 14px; }
+    .btn-secondary {
+        background: var(--crimson-wine); color: #FBF4E7; border: none; padding: 10px 22px; border-radius: 40px;
+        font-weight: 650; font-size: 13.5px; cursor: pointer;
+    }
+    .confirm-note { font-size: 12.5px; color: #5E7024; background: var(--lime-soft); padding: 8px 12px; border-radius: 10px; margin-top: 10px; display: none; font-weight: 500; }
+
+    /* tracking panel */
+    #map { height: 300px; width: 100%; }
+    .track-note { padding: 10px 20px; font-size: 11.5px; color: var(--ink-soft); border-top: 1px solid #F3ECDC; }
+    .pin-icon { width: 20px; height: 20px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid #FFFDF8; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+    .pin-icon.done { background: #5E7024; }
+    .pin-icon.current { background: var(--burnt-orange); }
+    .pin-icon.pending { background: #C9BE9C; }
+
+    /* report issue panel */
+    .report-body { padding: 18px 20px; font-size: 13.5px; color: var(--ink-soft); }
+
+    footer.dash-footer {
+        margin-top: 30px; border-top: 1px solid var(--sand-line); padding-top: 14px; display: flex;
+        justify-content: flex-end; font-size: 12px; color: var(--ink-soft); gap: 12px;
+    }
+
+    @media (max-width: 550px) {
+        .content { padding: 0 18px; }
+        .topbar { padding: 18px 18px; }
+        .lookup-row { flex-direction: column; align-items: stretch; }
+        .btn-find { align-self: flex-start; }
+        .order-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+        .quick-actions { flex-direction: column; align-items: stretch; }
+        .action-btn { justify-content: center; }
+        .item-row { flex-wrap: wrap; gap: 6px; }
+    }
+</style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="topbar">
+        <div class="brand">
+            <span class="brand-icon"><i class="fas fa-compass" style="font-size: 16px;"></i></span>
+            <span class="brand-name">Northstar</span>
+        </div>
+        <div class="topbar-center"><i class="fas fa-headset" style="margin-right: 6px; font-size: 13px;"></i> Support Center</div>
+        <div class="topbar-right"><i class="fas fa-box"></i> Self-Service</div>
+    </div>
+
+  <div class="content">
+    <div class="service-title">Self-Service<br><span>Resolution Assistant</span></div>
+
+    <!-- Order Lookup -->
+    <form class="lookup-card" id="lookupForm">
+        <div class="lookup-header"><i class="fas fa-search" style="margin-right: 8px; color: var(--crimson-wine);"></i> Order Lookup</div>
+        <div class="lookup-row">
+            <div class="lookup-field">
+                <label for="orderNumber">Order Number</label>
+                <input type="text" id="orderNumber" value="NS-10492" spellcheck="false">
+            </div>
+            <div class="lookup-field">
+                <label for="email">Email</label>
+                <input type="email" id="email" value="user@example.com">
+            </div>
+            <button type="submit" class="btn-find"><i class="fas fa-arrow-right"></i> Find Order</button>
+        </div>
+        <div class="demo-hint">Try: NS-10492 · NS-20871 (has a return) · NS-00000 (not found)</div>
+    </form>
+
+    <div class="error-banner" id="errorBanner"></div>
+
+    <!-- Order summary -->
+    <div class="order-card" id="orderCard">
+        <div class="order-header">
+            <span class="order-number" id="orderNum"></span>
+            <span class="order-status-badge" id="statusBadge"></span>
+        </div>
+        <div class="order-meta">
+            <span><i class="far fa-calendar-alt"></i> <span id="placedOn"></span></span>
+            <span class="fedex" id="carrierMeta"><i class="fas fa-shipping-fast"></i> <span id="carrierText"></span></span>
+        </div>
+        <div class="order-meta" style="margin-top: -4px;" id="etaRow">
+            <span><i class="far fa-clock"></i> Estimated delivery: <strong id="etaText"></strong></span>
+        </div>
+        <div class="items-list" id="itemsList"></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-wrap" id="quickActionsWrap">
+        <div class="quick-actions-label"><i class="fas fa-bolt" style="margin-right: 8px; color: var(--crimson-wine);"></i> Quick Actions</div>
+        <div class="quick-actions">
+            <button class="action-btn" id="btnTrack"><i class="fas fa-map-pin"></i> Track Package</button>
+            <button class="action-btn" id="btnReturn"><i class="fas fa-undo-alt"></i> Start Return/Refund</button>
+            <button class="action-btn" id="btnReport"><i class="fas fa-flag"></i> Report Issue</button>
+        </div>
+    </div>
+
+    <!-- Track Package panel -->
+    <div class="panel" id="trackPanel">
+        <div class="panel-head"><h3>Shipment route</h3><p>Based on carrier scan events — not live GPS</p></div>
+        <div class="track-body" id="trackBody">
+            <div id="map"></div>
+            <div class="track-note">Most recent scan is highlighted. Route line connects confirmed carrier checkpoints.</div>
+        </div>
+    </div>
+
+    <!-- Return/Refund panel -->
+    <div class="panel" id="returnsPanel">
+        <div class="panel-head"><h3>Return &amp; refund status</h3><p>Self-service — no ticket required</p></div>
+        <div class="returns-body" id="returnsBody"></div>
+    </div>
+
+    <!-- Report Issue panel -->
+    <div class="panel" id="reportPanel">
+        <div class="panel-head"><h3>Report an issue</h3><p>Outside self-service scope</p></div>
+        <div class="report-body">This routes to a live support agent and isn't handled by self-service lookup. In the full build this would open a ticket pre-filled with this order's details.</div>
+    </div>
+
+    <footer class="dash-footer">
+        <span><i class="far fa-circle" style="font-size: 8px; color: var(--warm-lime);"></i> Northstar Support</span>
+        <span>•</span>
+        <span>v4.0 — warm retail theme</span>
+    </footer>
+  </div>
+</div>
+<script>
+/* =========================================================
+   NORTHSTAR SUPPORT
+   Real backend integration + original Quick Actions
+   Backend: http://localhost:3001
+========================================================= */
+
+const API_BASE = 'http://localhost:3001';
+
+const el = {
+    form: document.getElementById('lookupForm'),
+    orderNumber: document.getElementById('orderNumber'),
+    email: document.getElementById('email'),
+    errorBanner: document.getElementById('errorBanner'),
+
+    orderCard: document.getElementById('orderCard'),
+    orderNum: document.getElementById('orderNum'),
+    statusBadge: document.getElementById('statusBadge'),
+    placedOn: document.getElementById('placedOn'),
+    carrierText: document.getElementById('carrierText'),
+    etaRow: document.getElementById('etaRow'),
+    etaText: document.getElementById('etaText'),
+    itemsList: document.getElementById('itemsList'),
+
+    quickActionsWrap: document.getElementById('quickActionsWrap'),
+    btnTrack: document.getElementById('btnTrack'),
+    btnReturn: document.getElementById('btnReturn'),
+    btnReport: document.getElementById('btnReport'),
+
+    trackPanel: document.getElementById('trackPanel'),
+    returnsPanel: document.getElementById('returnsPanel'),
+    reportPanel: document.getElementById('reportPanel'),
+
+    returnsBody: document.getElementById('returnsBody')
+};
+
+let currentOrder = null;
+let currentOrderId = null;
+
+let map = null;
+let markers = [];
+let routeLine = null;
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function showError(message) {
+    el.errorBanner.style.display = 'block';
+    el.errorBanner.textContent = message;
+}
+
+function clearError() {
+    el.errorBanner.style.display = 'none';
+    el.errorBanner.textContent = '';
+}
+
+function resetOrderView() {
+    el.orderCard.style.display = 'none';
+    el.quickActionsWrap.style.display = 'none';
+
+    closeAllPanels();
+
+    currentOrder = null;
+    currentOrderId = null;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '—';
+
+    const date = new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) {
+        return dateString;
+    }
+
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return '—';
+
+    const date = new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) {
+        return dateString;
+    }
+
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+}
+
+function normalizeStatus(value) {
+    return String(value || '').trim().toUpperCase();
+}
+
+function getItemIcon(item) {
+    const text = `${item?.name || ''} ${item?.sku || ''}`.toLowerCase();
+
+    if (text.includes('shoe')) return 'fa-shoe-prints';
+    if (text.includes('hoodie') || text.includes('shirt')) return 'fa-shirt';
+    if (text.includes('bottle')) return 'fa-flask';
+
+    return 'fa-box';
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+
+/* =========================================================
+   API — ORDER LOOKUP
+========================================================= */
+
+async function lookupOrder(orderId, email) {
+
+    const url =
+        `${API_BASE}/api/orders/${encodeURIComponent(orderId)}` +
+        `?email=${encodeURIComponent(email)}`;
+
+    console.log('[Northstar] Looking up:', url);
+
+    let response;
+
+    try {
+        response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            cache: 'no-store'
+        });
+    } catch (networkError) {
+        console.error('[Northstar] Network error:', networkError);
+
+        const error = new Error(
+            'The browser could not connect to the backend at http://localhost:3001.'
+        );
+
+        error.code = 'NETWORK_ERROR';
+        error.originalError = networkError;
+
+        throw error;
+    }
+
+    console.log(
+        '[Northstar] Backend response:',
+        response.status,
+        response.statusText
+    );
+
+    let payload = null;
+
+    try {
+        payload = await response.json();
+    } catch (jsonError) {
+        console.error('[Northstar] Invalid JSON response:', jsonError);
+
+        const error = new Error(
+            `The backend responded with HTTP ${response.status}, but the response was not valid JSON.`
+        );
+
+        error.code = 'INVALID_JSON';
+        error.status = response.status;
+
+        throw error;
+    }
+
+    console.log('[Northstar] Payload:', payload);
+
+    if (!response.ok) {
+        const error = new Error(
+            payload?.error?.message ||
+            payload?.message ||
+            `Request failed (${response.status})`
+        );
+
+        error.status = response.status;
+        error.payload = payload;
+
+        throw error;
+    }
+
+    /*
+       Your backend currently returns:
+
+       {
+         "data": {
+            "orderId": "...",
+            ...
+         },
+         "requestId": "..."
+       }
+
+       Therefore return data when present.
+    */
+
+    const order = payload?.data || payload;
+
+    if (!order || !order.orderId) {
+        throw new Error(
+            'The backend responded successfully, but no order data was returned.'
+        );
+    }
+
+    return order;
+}
+
+
+/* =========================================================
+   ORDER RENDERING
+========================================================= */
+
+function renderOrder(order) {
+
+    if (!order || !order.orderId) {
+        throw new Error('Invalid order data received from backend.');
+    }
+
+    currentOrder = order;
+    currentOrderId = order.orderId;
+
+    clearError();
+
+    el.orderCard.style.display = 'block';
+    el.quickActionsWrap.style.display = 'block';
+
+    closeAllPanels();
+
+    /* -----------------------------------------
+       Order heading
+    ----------------------------------------- */
+
+    el.orderNum.textContent =
+        `Order #${order.orderId}`;
+
+    /* -----------------------------------------
+       Dates
+    ----------------------------------------- */
+
+    el.placedOn.textContent =
+        `Placed on ${formatDate(order.placedOn)}`;
+
+    /* -----------------------------------------
+       Carrier
+    ----------------------------------------- */
+
+    el.carrierText.textContent =
+        `${order.carrier || 'Carrier'} tracking number: ${
+            order.trackingNumber || 'Unavailable'
+        }`;
+
+    /* -----------------------------------------
+       Overall status
+    ----------------------------------------- */
+
+    const status = normalizeStatus(order.status);
+
+    if (status === 'DELIVERED') {
+
+        el.statusBadge.className =
+            'order-status-badge delivered';
+
+        el.statusBadge.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            DELIVERED
+        `;
+
+        el.etaRow.style.display = 'none';
+
+    } else {
+
+        el.statusBadge.className =
+            'order-status-badge in-transit';
+
+        el.statusBadge.innerHTML = `
+            <i class="fas fa-truck"></i>
+            ${escapeHtml(status.replace(/_/g, ' ') || 'IN TRANSIT')}
+        `;
+
+        el.etaRow.style.display = 'flex';
+
+        el.etaText.textContent =
+            order.eta
+                ? formatDate(order.eta)
+                : 'Pending';
+    }
+
+    /* -----------------------------------------
+       Items
+    ----------------------------------------- */
+
+    const items = Array.isArray(order.items)
+        ? order.items
+        : [];
+
+    if (!items.length) {
+
+        el.itemsList.innerHTML = `
+            <div style="
+                padding:15px 0;
+                color:var(--ink-soft);
+                font-size:13px;
+            ">
+                No item information available.
+            </div>
+        `;
+
+    } else {
+
+        el.itemsList.innerHTML = items.map(item => {
+
+            const itemStatus =
+                normalizeStatus(item.status);
+
+            const delivered =
+                itemStatus === 'DELIVERED';
+
+            return `
+                <div class="item-row">
+
+                    <span class="item-name">
+
+                        <i
+                            class="fas ${getItemIcon(item)}"
+                            style="
+                                margin-right:10px;
+                                color:#C05A1F;
+                                width:16px;
+                            ">
+                        </i>
+
+                        ${escapeHtml(
+                            item.name ||
+                            item.sku ||
+                            'Item'
+                        )}
+
+                    </span>
+
+                    <span
+                        class="item-status ${
+                            delivered
+                                ? 'delivered'
+                                : 'in-transit'
+                        }">
+
+                        <i
+                            class="fas ${
+                                delivered
+                                    ? 'fa-check-circle'
+                                    : 'fa-truck'
+                            }"
+                            style="margin-right:4px;">
+                        </i>
+
+                        ${
+                            delivered
+                                ? 'Delivered'
+                                : 'In Transit'
+                        }
+
+                    </span>
+
+                </div>
+            `;
+
+        }).join('');
+    }
+
+    renderReturns(order);
+}
+
+
+/* =========================================================
+   MAP
+========================================================= */
+
+function pinIcon(state) {
+
+    return L.divIcon({
+        className: '',
+        html: `
+            <div class="pin-icon ${state}"></div>
+        `,
+        iconSize: [20, 20],
+        iconAnchor: [10, 18]
+    });
+}
+
+function ensureMap() {
+
+    if (map) {
+        return;
+    }
+
+    const mapElement = document.getElementById('map');
+
+    if (!mapElement) {
+        throw new Error('Map container was not found.');
+    }
+
+    map = L.map('map', {
+        scrollWheelZoom: false
+    });
+
+    L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        {
+            attribution:
+                '&copy; OpenStreetMap &copy; CARTO',
+
+            maxZoom: 19
+        }
+    ).addTo(map);
+}
+
+function backendStateToMapState(state) {
+
+    switch (normalizeStatus(state)) {
+
+        case 'DONE':
+            return 'done';
+
+        case 'CURRENT':
+            return 'current';
+
+        case 'PENDING':
+            return 'pending';
+
+        default:
+            return 'pending';
+    }
+}
+
+function renderTracking(order) {
+
+    ensureMap();
+
+    /* Remove previous markers */
+
+    markers.forEach(marker => {
+        map.removeLayer(marker);
+    });
+
+    markers = [];
+
+    /* Remove previous route */
+
+    if (routeLine) {
+        map.removeLayer(routeLine);
+        routeLine = null;
+    }
+
+    const events =
+        Array.isArray(order.trackingEvents)
+            ? order.trackingEvents
+            : [];
+
+    const validEvents =
+        events.filter(event =>
+            Number.isFinite(Number(event.latitude)) &&
+            Number.isFinite(Number(event.longitude))
+        );
+
+    if (!validEvents.length) {
+
+        document.getElementById('trackBody').innerHTML = `
+            <div style="
+                padding:32px 20px;
+                text-align:center;
+                color:var(--ink-soft);
+                font-size:13.5px;
+            ">
+
+                <i
+                    class="fas fa-map-marker-alt"
+                    style="
+                        font-size:28px;
+                        color:var(--crimson-wine);
+                        margin-bottom:10px;
+                    ">
+                </i>
+
+                <p>
+                    No carrier tracking events are available yet.
+                </p>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    const latlngs =
+        validEvents.map(event => [
+            Number(event.latitude),
+            Number(event.longitude)
+        ]);
+
+    /* Draw shipment route */
+
+    routeLine = L.polyline(
+        latlngs,
+        {
+            color: '#6D1B29',
+            weight: 2.5,
+            opacity: 0.55,
+            dashArray: '1 8'
+        }
+    ).addTo(map);
+
+    /* Add checkpoint markers */
+
+    validEvents.forEach(event => {
+
+        const state =
+            backendStateToMapState(event.state);
+
+        const marker =
+            L.marker(
+                [
+                    Number(event.latitude),
+                    Number(event.longitude)
+                ],
+                {
+                    icon: pinIcon(state)
+                }
+            ).addTo(map);
+
+        marker.bindPopup(`
+            <div style="min-width:190px">
+
+                <strong>
+                    ${escapeHtml(
+                        event.title ||
+                        'Shipment update'
+                    )}
+                </strong>
+
+                <br>
+
+                <span>
+                    ${escapeHtml(
+                        event.location ||
+                        'Unknown location'
+                    )}
+                </span>
+
+                <br>
+
+                <span style="
+                    font-size:11px;
+                    color:#746F55;
+                ">
+                    ${escapeHtml(
+                        formatDateTime(
+                            event.occurredAt
+                        )
+                    )}
+                </span>
+
+            </div>
+        `);
+
+        markers.push(marker);
+
+        if (
+            normalizeStatus(event.state) ===
+            'CURRENT'
+        ) {
+            setTimeout(() => {
+                marker.openPopup();
+            }, 150);
+        }
+    });
+
+    /* Fit route to map */
+
+    setTimeout(() => {
+
+        map.invalidateSize();
+
+        if (
+            routeLine &&
+            routeLine.getBounds().isValid()
+        ) {
+            map.fitBounds(
+                routeLine.getBounds(),
+                {
+                    padding: [30, 30]
+                }
+            );
+        }
+
+    }, 150);
+}
+
+
+/* =========================================================
+   RETURNS / REFUNDS
+========================================================= */
+
+function renderReturns(order) {
+
+    const returnData = order.returns;
+
+    if (returnData) {
+
+        const status =
+            normalizeStatus(
+                returnData.returnStatus
+            );
+
+        let statusLabel =
+            'Return in progress';
+
+        if (status === 'REFUND_PENDING') {
+            statusLabel = 'Refund pending';
+        }
+
+        el.returnsBody.innerHTML = `
+
+            <div class="returns-status-line pending">
+
+                <span class="rs-dot"></span>
+
+                <strong>
+                    ${escapeHtml(statusLabel)}
+                </strong>
+
+            </div>
+
+            <div class="returns-detail">
+
+                ${
+                    returnData.returnInitiatedAt
+                        ? `
+                            Return initiated
+                            <b>
+                                ${escapeHtml(
+                                    formatDateTime(
+                                        returnData.returnInitiatedAt
+                                    )
+                                )}
+                            </b>
+                            <br>
+                          `
+                        : ''
+                }
+
+                ${
+                    returnData.reason
+                        ? `
+                            Reason:
+                            <b>
+                                ${escapeHtml(
+                                    returnData.reason
+                                )}
+                            </b>
+                            <br>
+                          `
+                        : ''
+                }
+
+                ${
+                    returnData.refundAmount
+                        ? `
+                            Refund amount:
+                            <b>
+                                ${escapeHtml(
+                                    returnData.refundAmount
+                                )}
+                            </b>
+                            <br>
+                          `
+                        : ''
+                }
+
+                ${
+                    returnData.estimatedRefundDate
+                        ? `
+                            Estimated refund date:
+                            <b>
+                                ${escapeHtml(
+                                    formatDateTime(
+                                        returnData.estimatedRefundDate
+                                    )
+                                )}
+                            </b>
+                          `
+                        : ''
+                }
+
+            </div>
+        `;
+
+        return;
+    }
+
+    el.returnsBody.innerHTML = `
+
+        <div class="no-return-box">
+
+            <p>
+                No return has been initiated for this order.
+            </p>
+
+            <button
+                class="btn-secondary"
+                id="btnRequestReturn"
+                type="button">
+
+                <i
+                    class="fas fa-undo-alt"
+                    style="margin-right:6px;">
+                </i>
+
+                Request a return
+
+            </button>
+
+            <div
+                class="confirm-note"
+                id="returnConfirm">
+            </div>
+
+        </div>
+    `;
+
+    const requestButton =
+        document.getElementById(
+            'btnRequestReturn'
+        );
+
+    if (requestButton) {
+        requestButton.addEventListener(
+            'click',
+            requestReturn
+        );
+    }
+}
+
+async function requestReturn() {
+
+    if (!currentOrderId) {
+        return;
+    }
+
+    const button =
+        document.getElementById(
+            'btnRequestReturn'
+        );
+
+    const confirmBox =
+        document.getElementById(
+            'returnConfirm'
+        );
+
+    if (!button || !confirmBox) {
+        return;
+    }
+
+    button.disabled = true;
+
+    button.style.opacity = '0.6';
+
+    button.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i>
+        Requesting...
+    `;
+
+    try {
+
+        const response = await fetch(
+            `${API_BASE}/api/returns/${encodeURIComponent(
+                currentOrderId
+            )}`,
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type':
+                        'application/json',
+
+                    'Accept':
+                        'application/json'
+                },
+
+                body: JSON.stringify({
+                    email:
+                        el.email.value
+                            .trim()
+                            .toLowerCase(),
+
+                    reason:
+                        'Customer requested return'
+                })
+            }
+        );
+
+        const payload =
+            await response
+                .json()
+                .catch(() => null);
+
+        if (!response.ok) {
+
+            throw new Error(
+                payload?.error?.message ||
+                payload?.message ||
+                `Return request failed (${response.status})`
+            );
+        }
+
+        confirmBox.style.display =
+            'block';
+
+        confirmBox.style.background =
+            'var(--lime-soft)';
+
+        confirmBox.style.color =
+            '#5E7024';
+
+        confirmBox.textContent =
+            'Return requested successfully. Your return is now being processed.';
+
+        button.innerHTML = `
+            <i class="fas fa-check"></i>
+            Return Requested
+        `;
+
+    } catch (error) {
+
+        console.error(
+            '[Northstar] Return request failed:',
+            error
+        );
+
+        button.disabled = false;
+
+        button.style.opacity = '1';
+
+        button.innerHTML = `
+            <i class="fas fa-undo-alt"></i>
+            Request a return
+        `;
+
+        confirmBox.style.display =
+            'block';
+
+        confirmBox.style.background =
+            'var(--red-soft)';
+
+        confirmBox.style.color =
+            'var(--imperial-red)';
+
+        confirmBox.textContent =
+            error.message ||
+            'Unable to start the return right now.';
+    }
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
+
+el.btnTrack.addEventListener(
+    'click',
+    () => {
+
+        if (!currentOrder) {
+            return;
+        }
+
+        togglePanel(
+            el.trackPanel,
+            el.btnTrack,
+            () => renderTracking(
+                currentOrder
+            )
+        );
+    }
+);
+
+el.btnReturn.addEventListener(
+    'click',
+    () => {
+
+        if (!currentOrder) {
+            return;
+        }
+
+        togglePanel(
+            el.returnsPanel,
+            el.btnReturn
+        );
+    }
+);
+
+el.btnReport.addEventListener(
+    'click',
+    () => {
+
+        if (!currentOrder) {
+            return;
+        }
+
+        togglePanel(
+            el.reportPanel,
+            el.btnReport
+        );
+    }
+);
+
+
+/* =========================================================
+   PANEL CONTROLS
+========================================================= */
+
+function closeAllPanels() {
+
+    [
+        el.trackPanel,
+        el.returnsPanel,
+        el.reportPanel
+    ].forEach(panel => {
+
+        if (panel) {
+            panel.style.display = 'none';
+        }
+    });
+
+    [
+        el.btnTrack,
+        el.btnReturn,
+        el.btnReport
+    ].forEach(button => {
+
+        if (button) {
+            button.classList.remove(
+                'active'
+            );
+        }
+    });
+}
+
+function togglePanel(
+    panel,
+    button,
+    onOpen
+) {
+
+    if (!panel || !button) {
+        return;
+    }
+
+    const isOpen =
+        panel.style.display === 'block';
+
+    closeAllPanels();
+
+    if (isOpen) {
+        return;
+    }
+
+    panel.style.display = 'block';
+
+    button.classList.add('active');
+
+    if (typeof onOpen === 'function') {
+
+        try {
+            onOpen();
+        } catch (error) {
+
+            console.error(
+                '[Northstar] Panel error:',
+                error
+            );
+
+            showError(
+                `Unable to open this feature: ${
+                    error.message
+                }`
+            );
+        }
+    }
+
+    /* Scroll the selected panel into view */
+
+    setTimeout(() => {
+
+        panel.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+
+    }, 50);
+}
+
+
+/* =========================================================
+   ORDER LOOKUP FORM
+========================================================= */
+
+el.form.addEventListener(
+    'submit',
+    async event => {
+
+        event.preventDefault();
+
+        const orderId =
+            el.orderNumber.value
+                .trim()
+                .toUpperCase();
+
+        const email =
+            el.email.value
+                .trim()
+                .toLowerCase();
+
+        clearError();
+
+        if (!orderId) {
+
+            showError(
+                'Please enter an order number.'
+            );
+
+            return;
+        }
+
+        if (!email) {
+
+            showError(
+                'Please enter the email associated with the order.'
+            );
+
+            return;
+        }
+
+        resetOrderView();
+
+        const submitButton =
+            el.form.querySelector(
+                '.btn-find'
+            );
+
+        const originalButtonHTML =
+            submitButton.innerHTML;
+
+        submitButton.disabled = true;
+
+        submitButton.innerHTML = `
+            <i class="fas fa-spinner fa-spin"></i>
+            Looking up...
+        `;
+
+        try {
+
+            /*
+             * IMPORTANT:
+             * Only the fetch operation is treated
+             * as a backend/network operation.
+             *
+             * Rendering errors are handled separately
+             * so they do NOT produce the misleading
+             * "backend is not running" message.
+             */
+
+            let order;
+
+            try {
+
+                order =
+                    await lookupOrder(
+                        orderId,
+                        email
+                    );
+
+            } catch (error) {
+
+                if (
+                    error.code ===
+                    'NETWORK_ERROR'
+                ) {
+
+                    throw error;
+                }
+
+                throw error;
+            }
+
+            /* Backend succeeded */
+
+            try {
+
+                renderOrder(order);
+
+            } catch (renderError) {
+
+                console.error(
+                    '[Northstar] Order rendering error:',
+                    renderError
+                );
+
+                showError(
+                    `The order was retrieved, but the frontend could not display it: ${
+                        renderError.message
+                    }`
+                );
+
+                return;
+            }
+
+        } catch (error) {
+
+            console.error(
+                '[Northstar] Order lookup failed:',
+                error
+            );
+
+            if (
+                error.code ===
+                'NETWORK_ERROR'
+            ) {
+
+                showError(
+                    'Could not connect to Northstar Support at http://localhost:3001. Make sure the backend is running.'
+                );
+
+            } else if (
+                error.status === 400
+            ) {
+
+                showError(
+                    'Please check the order number and email address.'
+                );
+
+            } else if (
+                error.status === 403
+            ) {
+
+                showError(
+                    `Order ${orderId} was found, but the email does not match our records for this order.`
+                );
+
+            } else if (
+                error.status === 404
+            ) {
+
+                showError(
+                    `No order was found for ${orderId}. Check the order number and try again.`
+                );
+
+            } else if (
+                error.status === 429
+            ) {
+
+                showError(
+                    'Too many lookup attempts. Please wait a moment and try again.'
+                );
+
+            } else {
+
+                showError(
+                    error.message ||
+                    'Unable to retrieve the order right now.'
+                );
+            }
+
+        } finally {
+
+            submitButton.disabled = false;
+
+            submitButton.innerHTML =
+                originalButtonHTML;
+        }
+    }
+);
+
+
+/* =========================================================
+   DEMO ORDER SHORTCUTS
+========================================================= */
+
+document
+    .querySelectorAll('.demo-order')
+    .forEach(button => {
+
+        button.addEventListener(
+            'click',
+            () => {
+
+                el.orderNumber.value =
+                    button.dataset.order || '';
+
+                el.email.value =
+                    button.dataset.email || '';
+
+                el.form.requestSubmit();
+            }
+        );
+    });
+
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
+resetOrderView();
+
+console.log(
+    '%cNorthstar Support%c API: ' +
+    API_BASE,
+    'font-weight:700;color:#6D1B29;',
+    'color:#746F55;'
+);
+
+console.log(
+    '%cQuick Actions restored:%c Track / Return / Report',
+    'font-weight:700;color:#6D1B29;',
+    'color:#746F55;'
+);
+</script>
+<!-- Quick Actions -->
+<div class="quick-actions-wrap" id="quickActionsWrap">
+    ...
+</div>
+
+<!-- Track Package panel -->
+<div class="panel" id="trackPanel">
+    ...
+    <div id="map"></div>
+    ...
+</div>
+
+<!-- Return/Refund panel -->
+<div class="panel" id="returnsPanel">
+    ...
+</div>
+
+<!-- Report Issue panel -->
+<div class="panel" id="reportPanel">
+    ...
+</div>
+</body>
+</html>
