@@ -1,0 +1,136 @@
+﻿# Northstar Support Backend Architecture
+
+
+## Overview
+
+
+The Northstar Support Backend is a RESTful API built using Express.js and Prisma ORM. It provides customer support functionality including order lookup, order tracking, return requests, and support issue management.
+
+
+The backend uses PostgreSQL hosted on Neon as its primary database.
+
+
+---
+
+
+## Technology Stack
+
+
+- Node.js
+- Express.js
+- Prisma ORM
+- PostgreSQL (Neon)
+- Zod
+- Pino Logger
+- Helmet
+- CORS
+
+
+---
+
+
+## High-Level Architecture
+
+
+Client Application
+
+
+↓
+
+
+Express API
+
+
+↓
+
+
+Controllers
+
+
+↓
+
+
+Prisma Client
+
+
+↓
+
+
+Neon PostgreSQL
+
+
+---
+
+
+## Main Modules
+
+
+### Orders
+
+
+Responsible for:
+
+
+- Order lookup
+- Tracking information
+- Customer order validation
+
+
+### Returns
+
+
+Responsible for:
+
+
+- Return request creation
+- Return status management
+
+
+### Support
+
+
+Responsible for:
+
+
+- Customer support issues
+- Audit logging
+
+
+---
+
+
+## Database
+
+
+The application uses Prisma ORM to interact with PostgreSQL.
+
+
+Major entities include:
+
+
+- Order
+- OrderItem
+- Return
+- TrackingEvent
+- LookupAuditLog
+
+
+---
+
+
+## Logging
+
+
+The API uses Pino for structured request logging.
+
+
+---
+
+
+## Security
+
+
+- Helmet
+- CORS
+- Environment variable validation using Zod
+- Request validation

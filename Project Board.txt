@@ -1,0 +1,147 @@
+﻿Project Board
+Support Deflection MVP · Assignment 1 · 23 tasks — 18 Done, 3 Ready, 2 Backlog, 0 In Progress, 0 Review · synced against PR emails Aug 15, 2026
+Live version: GitHub Project (linked to sitakumi/Plp50). This document is a point-in-time export for offline/non-GitHub readers 
+#
+	Task
+	Owner
+	Priority
+	Stage
+	Definition of Done
+	1
+	Set up GitHub repository & add all members as collaborators
+	Adams
+	High
+	Done
+	All 5 members can push/pull on the shared repo; access confirmed by each member.
+	2
+	Draft & circulate signed Team Charter
+	Deborah
+	High
+	Done
+	Charter posted and explicitly agreed to by all members.
+	3
+	Set up Kanban Project Board
+	Deborah
+	High
+	Done
+	Board published with 10+ tasks, each with owner, priority, DoD, and a live stage.
+	4
+	Confirm team leadership / decision-making structure
+	Joshua
+	High
+	Done
+	Joshua confirmed in group chat before the agreed deadline.
+	5
+	Design self-serve dashboard layout (order lookup UI)
+	Sylvia
+	High
+	Done
+	Static layout shared to group and approved.
+	6
+	Build order-status lookup page (HTML/CSS/JS)
+	Adams
+	High
+	Done
+	Order lookup form renders and returns real mock-data results end-to-end.
+	7
+	Prototype order-tracking page with progress tracker
+	Joshua
+	Medium
+	Done
+	Track Package opens a step tracker showing shipment stage, carrier, and ETA.
+	8
+	Merge dashboard + tracking prototypes into one functional demo
+	Joshua
+	High
+	Done
+	dashboard-merged.html runs standalone end-to-end.
+	9
+	Wire up Find Order / Track / Return / Report as functional JS handlers
+	Adams & Sylvia
+	High
+	Done
+	Each action triggers a working handler with a real mock response, including a not-found error state.
+	10
+	Structural code review of frontend
+	Joshua (Audit Lead)
+	Medium
+	Done
+	Written review posted covering hardcoded data, interaction flow, and structure.
+	11
+	Refactor codebase into frontend/index.html + css/ + js/
+	Joshua
+	Medium
+	Done
+	CSS/JS extracted to separate files; shipped as css/style.css + js/app.js — reconcile with earlier styles/scripts naming in docs.
+	12
+	Build returns/refund wizard + stock-availability check
+	Tiffany & Adams
+	High
+	Done
+	Wizard completes end-to-end and generates a mock RMA ID; stock check returns in/out-of-stock.
+	13
+	Publish working prototype via GitHub Pages
+	Sylvia
+	Medium
+	Done
+	Live GitHub Pages link loads without errors and is shared with the team.
+	14
+	Compile team engineering workflow guide
+	Joshua
+	Medium
+	Done
+	team-workflow-guide.html published covering repo structure, branches, commits, and board flow.
+	15
+	Design Prisma order data schema (fields + relationships)
+	Joshua
+	High
+	Done
+	Schema covers required Order fields/relationships, validates successfully, migration generates cleanly.
+	16
+	Build order API routes (orders + returns: controller/repository/routes/schema/service)
+	Joshua
+	High
+	Done
+	API returns real order data matching the shape the frontend already expects.
+	17
+	Wire frontend to live backend, replacing mock ORDERS/STOCK data
+	Adams & Tiffany
+	Medium
+	Backlog
+	Dashboard renders real data from the API with no change to existing HTML/CSS.
+	18
+	Build SupportReport feature end-to-end (Prisma model, migration, routes/controller/service/repository/schema)
+	Joshua
+	High
+	Done
+	Report Issue can persist to the database via a real API, not just a mock ticket ID; migration verified against the database.
+	19
+	Add rep-token auth utility for support-rep-facing actions
+	Joshua
+	Medium
+	Done
+	mint-rep-token.js + repToken.js issue and validate a token; auth middleware updated to check it.
+	20
+	Reconcile PR #7 vs PR #8 — near-duplicate file lists
+	Josh
+	High
+	Ready
+	One of the two PRs is closed as superseded/duplicate; main has a single clear source of truth.
+	21
+	Resolve PR #4 — closed without a merge
+	Joshua
+	Medium
+	Ready
+	Confirm whether the color-theme changes landed elsewhere in main, or re-open and merge them.
+	22
+	Verify merge status of PRs #2, #3, #5, #7/#8 into main
+	Joshua (Audit Lead)
+	High
+	Ready
+	Each PR shows a confirmed merged state in GitHub, or a documented reason it isn't merged yet.
+	23
+	Get attributable PR/commit evidence for Adams, Tiffany, and Deborah
+	Adams, Tiffany, Deborah
+	High
+	Backlog
+	Each has at least one PR in Git history for work already done, so Balance of Contribution isn't graded on chat alone.
