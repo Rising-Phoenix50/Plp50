@@ -10,6 +10,7 @@ const { identifyActor } = require('./middleware/auth');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const ordersRoutes = require('./modules/orders/orders.routes');
 const returnsRoutes = require('./modules/returns/returns.routes');
+const reportsRoutes = require('./modules/reports/reports.routes');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/orders', ordersRoutes);
 app.use('/api/returns', returnsRoutes);
+app.use('/api/reports', reportsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler); // must be registered last

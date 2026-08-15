@@ -1,4 +1,4 @@
--- CreateEnum
+﻿-- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PROCESSING', 'SHIPPED', 'PARTIALLY_SHIPPED', 'DELIVERED', 'CANCELLED');
 
 -- CreateEnum
@@ -14,7 +14,7 @@ CREATE TYPE "ReturnStatus" AS ENUM ('REQUESTED', 'REFUND_PENDING', 'REFUNDED', '
 CREATE TYPE "ActorType" AS ENUM ('CUSTOMER', 'REP');
 
 -- CreateEnum
-CREATE TYPE "AuditAction" AS ENUM ('ORDER_LOOKUP', 'ORDER_LOOKUP_DENIED', 'TRACKING_VIEWED', 'RETURN_INITIATED');
+CREATE TYPE "AuditAction" AS ENUM ('ORDER_LOOKUP', 'ORDER_LOOKUP_DENIED', 'TRACKING_VIEWED', 'RETURN_INITIATED', 'ORDER_LOOKUP_FAILED');
 
 -- CreateTable
 CREATE TABLE "Order" (
@@ -84,14 +84,23 @@ CREATE TABLE "LookupAuditLog" (
     CONSTRAINT "LookupAuditLog_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "playing_with_neon" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "value" REAL,
+
+    CONSTRAINT "playing_with_neon_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Order_externalOrderId_key" ON "Order"("externalOrderId");
 
 -- CreateIndex
-CREATE INDEX "Order_externalOrderId_idx" ON "Order"("externalOrderId");
+CREATE INDEX "Order_customerEmail_idx" ON "Order"("customerEmail");
 
 -- CreateIndex
-CREATE INDEX "Order_customerEmail_idx" ON "Order"("customerEmail");
+CREATE INDEX "Order_externalOrderId_idx" ON "Order"("externalOrderId");
 
 -- CreateIndex
 CREATE INDEX "OrderItem_orderId_idx" ON "OrderItem"("orderId");
@@ -122,3 +131,4 @@ ALTER TABLE "Return" ADD CONSTRAINT "Return_orderId_fkey" FOREIGN KEY ("orderId"
 
 -- AddForeignKey
 ALTER TABLE "LookupAuditLog" ADD CONSTRAINT "LookupAuditLog_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

@@ -1,45 +1,40 @@
-// This schema models a read-through cache in front of Northstar's real order
-// system, plus the state this app genuinely owns: returns workflow, audit
-// trail, and shipment tracking snapshots. `Order`/`OrderItem` are a cache,
-// not the source of truth — see `cachedAt` and orders.service.js.
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL") // pooled — used at runtime
-  directUrl = env("DIRECT_URL") // direct — used only by `prisma migrate`
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  externalOrderId String      @unique // Northstar's real order ID, e.g. "NS-10492"
-  customerEmail   String // used to authorize customer self-service lookups
+  id              String           @id @default(cuid())
+  externalOrderId String           @unique
+  customerEmail   String
   status          OrderStatus
   carrier         String?
   trackingNumber  String?
   placedAt        DateTime
   eta             DateTime?
-  cachedAt        DateTime    @updatedAt // cache freshness, not truth
+  cachedAt        DateTime         @updatedAt
+  auditLogs       LookupAuditLog[]
+  items           OrderItem[]
+  returns         Return[]
+  trackingEvents  TrackingEvent[]
+  supportReports  SupportReport[]
 
-  items          OrderItem[]
-  returns        Return[]
-  trackingEvents TrackingEvent[]
-  auditLogs      LookupAuditLog[]
-
-  @@index([externalOrderId])
   @@index([customerEmail])
+  @@index([externalOrderId])
 }
 
 model OrderItem {
   id      String     @id @default(cuid())
   orderId String
-  order   Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
   sku     String
   name    String
   status  ItemStatus
+  order   Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
 }
@@ -47,14 +42,14 @@ model OrderItem {
 model TrackingEvent {
   id         String             @id @default(cuid())
   orderId    String
-  order      Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  title      String // e.g. "Arrived at sort facility"
-  location   String // e.g. "Regional Hub — Indianapolis, IN"
+  title      String
+  location   String
   latitude   Float
   longitude  Float
   occurredAt DateTime
   state      TrackingEventState @default(DONE)
-  sequence   Int // display order along the route
+  sequence   Int
+  order      Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId, sequence])
 }
@@ -62,35 +57,50 @@ model TrackingEvent {
 model Return {
   id                String       @id @default(cuid())
   orderId           String
-  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   status            ReturnStatus @default(REQUESTED)
   reason            String?
   refundAmountCents Int?
   initiatedAt       DateTime     @default(now())
   estimatedRefundAt DateTime?
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
 }
 
-// Every order lookup gets logged here — this is the compliance answer to
-// "who looked at this customer's data, and when." actorType distinguishes
-// a customer self-service lookup (repEmail is null) from a rep-assisted
-// lookup (repEmail is set), so audits can filter to "human rep access only."
-model LookupAuditLog {
-  id      String  @id @default(cuid())
-  orderId String?
-  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+model SupportReport {
+  id        String    @id @default(cuid())
+  orderId   String?
+  order     Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  actorType ActorType
+  repEmail  String?
+  email     String?
+  message   String
+  createdAt DateTime  @default(now())
 
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model LookupAuditLog {
+  id        String      @id @default(cuid())
+  orderId   String?
   actorType ActorType
   repEmail  String?
   action    AuditAction
   timestamp DateTime    @default(now())
   ipAddress String?
   requestId String?
+  order     Order?      @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
   @@index([repEmail])
   @@index([timestamp])
+}
+
+model playing_with_neon {
+  id    Int    @id @default(autoincrement())
+  name  String
+  value Float? @db.Real
 }
 
 enum OrderStatus {
@@ -128,7 +138,8 @@ enum ActorType {
 
 enum AuditAction {
   ORDER_LOOKUP
-  ORDER_LOOKUP_DENIED // email mismatch or not found — still worth logging
+  ORDER_LOOKUP_DENIED
   TRACKING_VIEWED
   RETURN_INITIATED
+  ORDER_LOOKUP_FAILED
 }
