@@ -1,0 +1,130 @@
+﻿PLP Grp 50 — Northstar Sprint
+Team Working Agreement & Project Board
+Assignment 1 — Support Deflection MVP for Northstar Retail Co.
+1. Team Charter
+1.1 Communication Norms
+• Primary channel: shared WhatsApp group "PLP group 50". All decisions that affect the whole team are posted with @all so no one can claim they missed them.
+• Response window: members respond within the same day; if someone is offline for a known reason (exams, network/power outage), they flag it proactively so the team isn't left guessing 
+• Code-switching between English and Swahili in chat is accepted; formal deliverables (charter, board, code, reviews) are written in English.
+• Feedback is direct but supportive — technical critique is paired with encouragement, following the tone Josh set in his structural review of the frontend.
+1.2 Roles & Responsibilities
+Member
+	Role
+	Notes
+	Tedde Adams
+	Frontend Developer
+	Repo owner/admin; leads order-status UI build
+	Collins Joshua
+	Audit Lead (also backend support)
+	Runs structural code reviews; flags risks before they compound
+	Tiffany Kariuki
+	Backend / Data Developer
+	Owns returns, refunds, and stock-availability logic and data schema
+	Sylvia Achieng
+	Frontend / Integration Developer
+	Dashboard layout, GitHub Pages hosting, code-structure refactor
+	Deborah Thuku
+	Documentation Lead 
+	Charter, board, and workflow-guide documentation; team coordination
+	 
+1.3 Deadlines
+• Team leadership confirmed: within 24 hrs of project kickoff, which was 11th August, 2026 ("before tomorrow 1200").
+• Working skeleton in collaborators' hands: as soon as the repo and roles are set, so no one is blocked waiting on delegation.
+1.4 Tools & Working Conventions
+• Version control: shared GitHub repository; every member added as a collaborator by email invite before writing code.
+ Hosting: GitHub Pages, so that any member can review a live link instead of running code locally.
+• Project structure: separation of concerns is mandatory — index.html, styles/style.css, scripts/script.js, images/ — no large inline CSS or JS blocks, per the convention.
+• Build approach: a mix of hand-coding and AI-assisted ("vibe-coded") drafting — complex pieces are vibe-coded and then reviewed line-by-line before merging; lightweight pieces are hand-coded directly.
+1.5 Conflict Resolution & Escalation
+• Technical disagreements are resolved by deferring to the audit lead's written review, which lists concrete issues (e.g, hardcoded data, missing interaction flow, unstructured files) rather than general criticism.
+• If a member shows zero visible activity for 1 day, Joshua raises it in the group immediately rather than waiting for the deadline, and the team reassigns or splits the task if needed.
+• Personal constraints (exams, connectivity issues) are accommodated without penalty as long as they're communicated proactively — the standard the team already held itself to with Adams and Josh.
+1.6 Agreement
+By continuing to contribute tasks, commits, and reviews under this charter in the shared repository and group chat, each member below is treated as having signed and agreed to these terms.
+• Adams — agreed
+• Joshua — agreed
+• Tiffany — agreed
+• Sylvia — agreed
+• Deborah — agreed
+2. Project Board
+15 granular tasks below, each scoped to ≤4 hours of work with a single checkable Definition of Done, in line with the sprint's anti-black-box rule.
+#
+	Task
+	Owner
+	Priority
+	Definition of Done
+	1
+	Stand up GitHub repository & add all members as collaborators
+	Adams
+	High
+	All 5 members can push/pull on the shared repo; access confirmed by each member in chat
+	2
+	Draft & circulate signed Team Charter
+	Deborah
+	High
+	Charter posted in group chat and explicitly acknowledged/agreed to by all members.
+	3
+	Populate Project Board with 10+ granular tasks (owner, priority, DoD)
+	Deborah
+	High
+	Board published with every task ≤4 hrs, each carrying an owner, priority, and a single checkable. Definition of Done.
+	4
+	Confirm team leadership/decision-making structure
+	Joshua
+	High
+	Joshua confirmed in group chat before the agreed deadline.
+	5
+	Design self-serve support dashboard layout (order lookup UI)
+	Sylvia
+	High
+	Static layout screenshot shared to group and no unresolved objections after 24 hrs.
+	6
+	Build order-status lookup page (HTML/CSS)
+	Adams
+	High
+	Order lookup form renders in-browser and displays mock order data end-to-end
+	7
+	Prototype order-tracking page with map layer (mock coordinates)
+	Adams
+	Medium
+	Clicking Track Package opens a map view showing a mock shipment location, destination, and progress
+	8
+	Merge dashboard + order-tracking prototypes into one functional demo
+	Joshua
+	High
+	dashboard-merged.html runs standalone and lets a user find an order and track it in one flow
+	9
+	Wire up Find Order / Track Package / Start Return-Refund / Report Issue as functional JS handlers
+	Adams & Sylvia
+	High
+	Each of the four actions triggers a working JS handler that returns a mock response, not a static button
+	10
+	Structural code review of frontend (data, interaction flow, file layout)
+	Joshua (Audit Lead)
+	Medium
+	Written review posted in group covering hardcoded data, interaction flow, and structure, with issues logged for follow-up
+	11
+	Refactor codebase into index.html / styles/ / scripts/ / images/
+	Sylvia
+	Medium
+	CSS and JS extracted into separate files, no inline <style> or <script> blocks remain, page renders identically
+	12
+	Draft returns/refund and stock-availability response logic
+	Tiffany
+	High
+	Decision-tree or data flow documented and shared for at least 2 of the 3 required ticket categories
+	13
+	Draft backend data schema for order, return, and stock objects
+	Tiffany
+	Medium
+	Schema draft (fields + types) shared in repo or chat and reviewed by Josh
+	14
+	Publish working prototype via GitHub Pages
+	Sylvia
+	Medium
+	Live GitHub Pages link loads without errors and is shared with the full team for review
+	15
+	Compile team workflow / project-structure guide
+	Deborah
+	Low
+	team-workflow-guide.html published covering setup steps and roles

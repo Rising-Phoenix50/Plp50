@@ -1,0 +1,226 @@
+﻿Rising Phoenix — Northstar Sprint
+Project: Northstar Retail Co. — Support Deflection MVP
+Team Lead: Collins Joshua  |  Audit Lead: Collins Joshua
+1. Sprint overview
+5 Team Members · 23 Active Tasks · 6 Sprint Milestones 
+• Overall status: Backend shipped · integration in progress
+• Current sprint: Build & integrate
+• Major deliverables: API · Frontend · DB · Testing
+2. Team directory
+Member
+	Role
+	Responsibilities
+	GitHub
+	Collins Joshua
+	Team Lead / Audit Lead / Backend
+	Project oversight, sprint decisions, code audits, backend architecture
+	Shadow-Walker360
+	Tiffany Kariuki
+	Backend Engineer / Database
+	API logic, Prisma schema, Neon/PostgreSQL, data consistency
+	spooder-dev
+	Adams Tedde
+	Frontend Developer
+	UI components, responsive design, frontend state management
+	—
+	Sylvia Achieng
+	Frontend / Integration
+	API integration, tracking/map features, frontend-backend glue
+	sylvix5
+	Deborah Thuku
+	Documentation / Board Lead
+	Project records, board maintenance, delivery tracking
+	Debbie-1010
+	 
+3. Working agreement
+Communication
+Respond within 24 hours on WhatsApp. Tag relevant members. Escalate blockers immediately — no silent delays.
+Task ownership
+Every task has a named owner. If blocked, flag it in the board before the deadline, not after.
+Transparency
+All work visible on GitHub Projects. No private branches without a PR. Progress is team property.
+Blocker reporting
+Report blockers in WhatsApp + Board simultaneously. Include impact and propose the next step.
+Code review
+Every PR requires at least one review before merging. Reviews are technical, not personal.
+Documentation
+Code changes without updated docs are incomplete. Docs are a delivery requirement, not optional.
+4. Infrastructure
+• WhatsApp — coordination, urgent blockers, decisions
+• GitHub — code, branches, commits, PRs, reviews. 6 PRs opened, 1 confirmed merged 
+• GitHub Projects — tasks, ownership, status, delivery tracking
+• Documentation — formal decisions, charter, audit findings
+5. Engineering process — branch naming
+All branches follow strict prefixes. No unprefixed branches merged to main.
+• feature/ — new user-facing functionality
+• fix/ — bug fixes and patches
+• chore/ — maintenance, config, tooling
+• docs/ — documentation updates only
+• review/ — audit-driven change branches
+Evidenced in the actual repo: fix/prisma-setup (PR #2). Other branch names weren't visible in PR notification emails — pull the full branch list from GitHub to confirm compliance.
+6. Sprint board (synced to PR evidence, Aug 15, 2026)
+Backlog (1)
+• Wire frontend to live backend
+Ready (3)
+• Reconcile 
+• Verify Neon/PostgreSQL live
+• Resolve (unmerged)
+In progress (0)
+• Nothing here — flagged risk
+Code review (1)
+• Schema review by Tiffany
+Done (18)
+• Order lookup + tracking UI, return/refund wizard, backend API (merged #7), + 15 more
+7. Audit center
+Audit Lead: Collins Joshua · 8 findings logged from PR review evidence
+Component
+	Reviewer
+	Finding
+	Severity
+	Status
+	Requirements compliance
+	Collins Joshua
+	≥2 of 3 ticket categories covered; stock check added as bonus
+	Info
+	Resolved
+	Frontend/backend integration
+	Collins Joshua
+	Frontend still on mock ORDERS/STOCK data, not wired to live API
+	Medium
+	Open
+	Database consistency
+	Tiffany (spooder-dev)
+	Return–Order relation added; inline comments omitted on schema
+	Low
+	Open
+	Security configuration
+	Collins Joshua
+	rep-token auth added; no documented rotation/expiry policy yet
+	Medium
+	Open
+	Hardcoded data detection
+	Collins Joshua
+	Early frontend had hardcoded order data; replaced with mock-data pattern
+	Medium
+	Resolved
+	Testing coverage
+	Collins Joshua
+	orders module tested; reports and returns modules have no tests yet
+	Medium
+	Open
+	Documentation accuracy
+	Deborah
+	Docs reference styles/scripts folders; shipped code uses css/js
+	Low
+	Open
+	Technical risks & workflow
+	Collins Joshua
+	confirmed merged
+	High
+	Open
+	 
+8. Risk & blocker register
+Risk
+	Impact
+	Prob.
+	Owner
+	Mitigation
+	Status
+	Duplicate / unmerged PRs
+	Medium
+	Confirmed
+	Collins Joshua
+	Close PR #6 & #8 as superseded; verify no changes lost
+	Active
+	Balance of contribution
+	High
+	Medium
+	Adams / Tiffany / Deborah
+	Each opens attributable PR/commit evidence before Day 5
+	Active
+	Integration issues
+	Critical
+	High
+	Sylvia Achieng
+	Early API contract agreement, mock data first
+	Active
+	Merge conflicts
+	High
+	Medium
+	All Devs
+	Frequent rebasing, small PRs
+	Monitoring
+	Database configuration
+	Critical
+	Low
+	Tiffany
+	Migrations shipped & merged in PR #7; live Neon check pending
+	Monitoring
+	Environment variables
+	High
+	Low
+	Collins Joshua
+	.env.example shipped in PR #2/#6, no secrets in repo
+	Watch
+	Testing delays
+	Medium
+	Medium
+	All Devs
+	orders module tested; reports/returns modules still need coverage
+	Monitoring
+	Documentation delays
+	Low
+	Medium
+	Deborah
+	Docs written incrementally per sprint
+	Watch
+	 
+9. Milestone tracker
+Milestone
+	Status
+	Project setup
+	Done
+	Requirements
+	Done
+	Backend
+	Done
+	Frontend
+	In progress
+	Database
+	Review
+	Integration
+	In progress
+	Testing
+	In progress
+	Audit
+	In progress
+	Documentation
+	In progress
+	Presentation
+	Not started
+	Submission
+	Not started
+	 
+Definition of Done
+Every feature must satisfy all criteria before moving to Done:
+• Requirement implemented & code tested
+• Code reviewed & audit completed
+• Documentation & board updated
+• No blocking errors present
+• Feature demonstrated to team
+• Changes properly integrated
+Team Lead readiness
+Collins Joshua must confidently present: project objectives, architecture (frontend, backend, DB, integration), major implementation decisions, and answer technical questions.
+10. Final delivery checklist
+Confirm all items before submission. Team Lead signs off on completion.
+• □  Project functional — Backend live; frontend still on mock data
+• ✓  Frontend complete — All core screens implemented
+• ✓  Backend complete — API endpoints live, merged 
+• □  Database configured — Migrations shipped; live Neon check pending
+• □  Integration tested — Frontend ↔ backend not yet verified
+• □  Audit complete — 8 findings logged; 6 still open
+• □  Documentation complete — Charter/board/workflow done; go-live note pending
+• ✓  Board updated — 23 tasks tracked, synced to PR evidence
+• □  Presentation ready — This document — rehearsal still needed
+• □  Submission ready — Blocked on items above
+"Build Together. Review Together. Deliver Together."

@@ -1,0 +1,117 @@
+﻿# Northstar Support Dashboard — Frontend Documentation
+
+
+## Overview
+
+
+The frontend is a self-service support dashboard that lets a customer look up an order by order number and email, then take quick actions on it: track the shipment on a map, check return/refund status, or flag an issue for a live agent.
+
+
+It's a static, dependency-light build — plain HTML/CSS/JS plus two CDN libraries (Font Awesome for icons, Leaflet for the tracking map). No build step, no framework, no bundler.
+
+
+Right now order data is served from a mock in-memory object (`ORDERS`) inside `script.js`, shaped the way a real API response would look, so it can be swapped for real `fetch()` calls to the backend without changing the render logic.
+
+
+---
+
+
+## File Structure
+
+
+```
+northstar/
+├── index.html   → markup + structure
+├── styles.css   → all styling
+└── script.js    → all interactivity and data
+```
+
+
+All three files must live in the same folder — `index.html` references the other two by relative path (`<link href="styles.css">` and `<script src="script.js">`), so the browser needs to find them sitting right next to it.
+
+
+### `index.html`
+Contains the page structure only:
+- **Top bar** — brand mark, "Support Center" label, "Self-Service" badge
+- **Order Lookup form** (`#lookupForm`) — order number + email inputs
+- **Error banner** (`#errorBanner`) — hidden by default, shown on lookup failure
+- **Order summary card** (`#orderCard`) — order number, status badge, dates, carrier, item list
+- **Quick Actions row** (`#quickActionsWrap`) — Track Package / Start Return / Report Issue buttons
+- **Three expandable panels**, one per action:
+  - `#trackPanel` — embeds the Leaflet map (`#map`)
+  - `#returnsPanel` — return/refund status
+  - `#reportPanel` — static hand-off message (this one has no interactive logic; it's a placeholder for routing to a live agent)
+
+
+Elements that depend on a successful lookup (`#orderCard`, `#quickActionsWrap`, all three panels) are `display: none` by default in CSS and only get revealed by JavaScript once an order is found.
+
+
+### `styles.css`
+Plain CSS, organized by section with comments matching the HTML sections above (top bar, lookup card, order card, quick actions, panels, returns, tracking, report). Includes one mobile breakpoint (`@media (max-width: 550px)`) that stacks the layout vertically.
+
+
+No CSS variables or preprocessor — colors and spacing are hardcoded per rule. If this grows, pulling repeated values (like the primary blue `#1f5b9e`) into CSS custom properties would be a reasonable next step.
+
+
+### `script.js`
+Everything here falls into four groups:
+
+
+1. **Mock data** — the `ORDERS` object, keyed by order number, containing order details, items, return status, and a `trackingEvents` array (each event has a title, location, lat/lng, timestamp, and state: `done` / `current` / `pending`).
+2. **DOM references** — the `el` object caches every element the script touches, looked up once by `id` at load time.
+3. **Render functions** — `renderOrder()`, `renderReturns()`, `renderTracking()`, `pinIcon()`, `ensureMap()`. These take an order object and populate the relevant DOM/map.
+4. **Event wiring** — the lookup form's `submit` handler (validates order number + email against `ORDERS`, shows the error banner or renders the order), and click handlers on the three Quick Action buttons that call `toggle()` to open/close their panel.
+
+
+`currentOrder` holds whichever order is currently loaded, so the action buttons know what to render into their panels. `map`, `markers`, and `routeLine` are Leaflet objects kept at module scope so the map instance is reused instead of recreated every time the Track panel is reopened.
+
+
+---
+
+
+## Setup — Running It Locally
+
+
+No install or build step is required — it's static files — but it needs to be **served**, not just double-clicked open, because `index.html` fetches `styles.css` and `script.js` by relative path and some browsers block that under the `file://` protocol.
+
+
+**Option 1 — VS Code Live Server (easiest)**
+1. Open the `northstar/` folder in VS Code
+2. Install the "Live Server" extension if you don't have it
+3. Right-click `index.html` → "Open with Live Server"
+
+
+**Option 2 — Python's built-in server**
+```bash
+cd northstar
+python3 -m http.server 8000
+```
+Then open `http://localhost:8000` in a browser.
+
+
+**Option 3 — Node's `http-server`**
+```bash
+npx http-server northstar -p 8000
+```
+
+
+### Trying it out
+The lookup form is pre-filled with a working demo order. Try these in the Order Number field:
+- `NS-10492` — in-transit order, no return
+- `NS-20871` — delivered order, has a pending return/refund
+- `NS-00000` — triggers the "not found" error banner
+
+
+Email must match the order's mock `email` field exactly (case-insensitive) or the lookup returns a "found but email doesn't match" error.
+
+
+---
+
+
+## Known Limitations / Next Steps
+
+
+- Order data is hardcoded in `ORDERS` — needs to be replaced with real API calls once the backend endpoint is available.
+- The "Report Issue" panel is static copy only; it doesn't yet create a real ticket.
+- No loading/error states for network requests, since there currently are none — will need to be added once this talks to the real backend.
+- No CSS custom properties yet; color values are repeated across the stylesheet.

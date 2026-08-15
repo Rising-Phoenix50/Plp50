@@ -1,0 +1,77 @@
+﻿# Database Schema Documentation
+
+
+## Order
+
+
+Represents a customer order.
+
+
+Fields include:
+
+
+- id
+- externalOrderId
+- customerEmail
+- status
+- carrier
+- trackingNumber
+- placedAt
+- eta
+
+
+Relationships
+
+
+- One Order has many OrderItems.
+- One Order has many TrackingEvents.
+- One Order has many Returns.
+- One Order has many LookupAuditLogs.
+
+
+---
+
+
+## OrderItem
+
+
+Represents an individual item within an order.
+
+
+---
+
+
+## Return
+
+
+Represents customer return requests.
+
+
+---
+
+
+## TrackingEvent
+
+
+Stores shipment tracking history.
+
+
+---
+
+
+## LookupAuditLog
+
+
+Records customer and representative order lookup activity.
+
+
+Fields include:
+
+
+- actorType
+- action
+- timestamp
+- requestId
+
+
+This table provides traceability for customer support operations.
