@@ -1,17 +1,14 @@
-const config = require('../config');
 const AppError = require('../lib/AppError');
+const { verifyRepToken } = require('../lib/repToken');
 
 /**
  * Identifies the caller and attaches req.actor = { type: 'CUSTOMER' | 'REP', repEmail?: string }.
  *
- * Sprint-stage implementation: a rep session is a signed-enough bearer token
- * in the Authorization header. This is deliberately NOT real SSO — it's the
- * minimum that lets the audit trail be honest (real repEmail, not a guess)
- * while auth is tracked as a known gap for the full build.
- *
- * Swap this function's internals for real SSO/JWT verification later;
- * nothing downstream (controllers, services, audit logging) needs to change
- * because they only ever read req.actor.
+ * Rep sessions are HMAC-signed, expiring tokens (see lib/repToken.js) — not
+ * real SSO yet, but no longer a format-only stub either (see AUDIT_REPORT.md
+ * C-1: the previous version accepted any string shaped like `rep:<email>`
+ * with zero verification). Swap in real JWT/SSO verification later; nothing
+ * downstream of req.actor needs to change.
  */
 function identifyActor(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -42,20 +39,6 @@ function requireRep(req, res, next) {
     return next(AppError.unauthorized('This action requires a rep session', 'REP_REQUIRED'));
   }
   next();
-}
-
-// --- Stub token verification ---------------------------------------------
-// Real version: verify a JWT signed by your SSO provider (Okta/Auth0/etc)
-// against config.REP_SESSION_SECRET or the provider's public key, and
-// extract the rep's email from a verified claim.
-function verifyRepToken(token) {
-  // TEMP: sprint stub — treat any non-empty token matching this exact
-  // shared-secret format as valid. Replace before this touches real PII at scale.
-  if (token === config.REP_SESSION_SECRET) return null; // guard against the secret itself being sent
-  if (token.startsWith('rep:') && token.length > 10) {
-    return token.slice('rep:'.length);
-  }
-  return null;
 }
 
 module.exports = { identifyActor, requireRep };

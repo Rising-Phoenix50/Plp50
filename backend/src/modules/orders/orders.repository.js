@@ -19,27 +19,52 @@ async function findByExternalId(externalOrderId) {
 async function upsertFromUpstream(externalOrderId, upstreamData) {
   const { items, trackingEvents, ...orderFields } = upstreamData;
 
-  return db.$transaction(async (tx) => {
-    const order = await tx.order.upsert({
-      where: { externalOrderId },
-      update: { ...orderFields },
-      create: { externalOrderId, ...orderFields },
-    });
+  // Only the writes need to be atomic — reading the result back doesn't,
+  // so it happens after commit, outside the transaction. That drops one
+  // round trip from the timeout-sensitive window and lets the read use a
+  // fresh connection instead of holding the transaction's connection open
+  // longer than necessary.
+  //
+  // `timeout`/`maxWait` are set explicitly (not left at Prisma's 5000ms
+  // default) because this transaction does 5 sequential round trips
+  // (upsert, delete, createMany, delete, createMany), and against Neon's
+  // serverless Postgres a cold compute can add multiple seconds of latency
+  // to the *first* query after idle. That's expected serverless behavior,
+  // not a bug — the timeout needs to have room for it. If this consistently
+  // needs more than ~15s even on a warm compute, that's a signal to
+  // restructure the write pattern (see repository comment below), not to
+  // keep raising the number.
+  const orderId = await db.$transaction(
+    async (tx) => {
+      const order = await tx.order.upsert({
+        where: { externalOrderId },
+        update: { ...orderFields },
+        create: { externalOrderId, ...orderFields },
+      });
 
-    await tx.orderItem.deleteMany({ where: { orderId: order.id } });
-    await tx.orderItem.createMany({
-      data: items.map((item) => ({ ...item, orderId: order.id })),
-    });
+      // NOTE: wholesale delete+recreate is simple and correct, but it's 4 of
+      // this transaction's 5 round trips. If cache-refresh latency is still
+      // a problem after the timeout fix, the next step is diffing
+      // items/trackingEvents and only writing what changed, rather than
+      // dropping and rebuilding the full child set every 60s.
+      await tx.orderItem.deleteMany({ where: { orderId: order.id } });
+      await tx.orderItem.createMany({
+        data: items.map((item) => ({ ...item, orderId: order.id })),
+      });
 
-    await tx.trackingEvent.deleteMany({ where: { orderId: order.id } });
-    await tx.trackingEvent.createMany({
-      data: trackingEvents.map((ev) => ({ ...ev, orderId: order.id })),
-    });
+      await tx.trackingEvent.deleteMany({ where: { orderId: order.id } });
+      await tx.trackingEvent.createMany({
+        data: trackingEvents.map((ev) => ({ ...ev, orderId: order.id })),
+      });
 
-    return tx.order.findUnique({
-      where: { id: order.id },
-      include: { items: true, returns: true, trackingEvents: { orderBy: { sequence: 'asc' } } },
-    });
+      return order.id;
+    },
+    { timeout: 15_000, maxWait: 10_000 }
+  );
+
+  return db.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, returns: true, trackingEvents: { orderBy: { sequence: 'asc' } } },
   });
 }
 
